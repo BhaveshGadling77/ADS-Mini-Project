@@ -5,10 +5,12 @@ A cross-platform compression and decompression application built as an **ADS Min
 The project focuses on implementing compression algorithms and their underlying **data structures and algorithms** in C++, exposed through a backend server and used by a React Native mobile application.
 
 ## Task Assigned
-Video compression => Sangram
-Image compression => Jibran
-Text File compression => Bhavesh
-Audio File compression => Parth 
+
+- **Video Compression** → Sangram
+- **Image Compression** → Jibran
+- **Text File Compression** → Bhavesh
+- **Audio File Compression** → Parth
+
 ---
 
 ## 1. Architecture
