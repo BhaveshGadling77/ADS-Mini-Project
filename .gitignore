@@ -67,3 +67,18 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Allow handwritten Makefile in image_compression
+!image_compression/Makefile
+
+# Image compression module build & test outputs
+image_compression/compressor
+image_compression/compare_images
+image_compression/output/compressed/*
+!image_compression/output/compressed/.gitkeep
+image_compression/output/decompressed/*
+!image_compression/output/decompressed/.gitkeep
+image_compression/output/*.bin
+image_compression/results/logs/*
+!image_compression/results/logs/.gitkeep
+image_compression/results/*.csv
