@@ -1,0 +1,26 @@
+# Git
+.git
+.gitignore
+
+# Node & Package Managers
+**/node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build Artifacts
+**/dist
+compression-core/build
+
+# Storage & Temporary Files
+server/storage/jobs/*
+!server/storage/jobs/.gitkeep
+server/storage/*
+storage/jobs/*
+!storage/jobs/.gitkeep
+*.log
+testing.txt
+.DS_Store
+.vscode
+.cache
+
