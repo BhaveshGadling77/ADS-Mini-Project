@@ -1,11 +1,11 @@
-# ==============================================================================
+
 # Bitshrink - Web Frontend (React + Vite + Tailwind CSS)
 # Multi-stage Dockerfile for the Web UI Client
-# ==============================================================================
 
-# ------------------------------------------------------------------------------
+
+# 
 # Stage 1: Build React + Vite Web Application
-# ------------------------------------------------------------------------------
+# 
 FROM node:22-bookworm-slim AS web-builder
 
 WORKDIR /workspace/shared
@@ -20,9 +20,9 @@ ARG VITE_API_BASE_URL=""
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN npm run build
 
-# ------------------------------------------------------------------------------
+# 
 # Stage 2: Minimal Production Web Server (Nginx)
-# ------------------------------------------------------------------------------
+# 
 FROM nginx:alpine AS runner
 
 # Copy built static SPA assets to Nginx html folder

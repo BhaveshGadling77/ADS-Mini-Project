@@ -1,11 +1,7 @@
-# ==============================================================================
 # Bitshrink - Standalone C++ Compression Core Engine & CLI
 # Multi-stage Dockerfile for C++ CLI Engine & Unit Tests
-# ==============================================================================
 
-# ------------------------------------------------------------------------------
 # Stage 1: Build & Test Engine
-# ------------------------------------------------------------------------------
 FROM debian:bookworm-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -25,9 +21,9 @@ RUN cmake -DCMAKE_BUILD_TYPE=Release .. && \
 # Run internal C++ algorithm test suite
 RUN ./bin/test_runner
 
-# ------------------------------------------------------------------------------
+# 
 # Stage 2: Minimal CLI Runtime
-# ------------------------------------------------------------------------------
+# 
 FROM debian:bookworm-slim AS runner
 
 RUN apt-get update && apt-get install -y --no-install-recommends \

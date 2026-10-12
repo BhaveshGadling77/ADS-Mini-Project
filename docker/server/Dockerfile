@@ -1,11 +1,11 @@
-# ==============================================================================
+
 # Bitshrink - Backend Server & C++ Compression Core Engine
 # Multi-stage Dockerfile for the Fastify API Backend
-# ==============================================================================
 
-# ------------------------------------------------------------------------------
+
+# 
 # Stage 1: Build C++ Core Compression Engine
-# ------------------------------------------------------------------------------
+# 
 FROM debian:bookworm-slim AS cpp-builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -22,9 +22,9 @@ WORKDIR /workspace/compression-core/build
 RUN cmake -DCMAKE_BUILD_TYPE=Release .. && \
     cmake --build . --parallel $(nproc)
 
-# ------------------------------------------------------------------------------
+# 
 # Stage 2: Build Server Backend (TypeScript -> JavaScript)
-# ------------------------------------------------------------------------------
+# 
 FROM node:22-bookworm-slim AS server-builder
 
 WORKDIR /workspace/shared
@@ -37,9 +37,9 @@ RUN npm ci
 COPY server/ ./
 RUN npm run build
 
-# ------------------------------------------------------------------------------
+# 
 # Stage 3: Minimal Production Runtime
-# ------------------------------------------------------------------------------
+# 
 FROM node:22-bookworm-slim AS runner
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
