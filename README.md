@@ -1,378 +1,256 @@
-# ADS Mini Project — Compression Application
+# Bitshrink — Multi-Modal Data Compression System
 
-A cross-platform compression and decompression application built as an **ADS Mini Project**.
+A high-performance cross-platform data compression system built as an **Advanced Data Structures (ADS) Mini Project**.
 
-The project focuses on implementing compression algorithms and their underlying **data structures and algorithms** in C++, exposed through a backend server and used by a React Native mobile application.
-
-## Task Assigned
-
-- **Video Compression** → Sangram
-- **Image Compression** → Jibran
-- **Text File Compression** → Bhavesh
-- **Audio File Compression** → Parth
+Bitshrink implements fundamental lossless data compression algorithms and custom **advanced data structures** in native C++17/20, exposed through a Fastify REST API backend, and presented through an interactive React + TypeScript web application with multi-modality support.
 
 ---
 
-## 1. Architecture
+## Team Task Assignment & Modules
+
+| Modality | Algorithm / Strategy | Primary Data Structure | Team Member | Status | Implementation Guide |
+|---|---|---|---|---|---|
+| **Text** | LZW, Static Huffman, BWT + MTF | **Trie**, **Min-Heap**, **Suffix Array / List** | **Bhavesh** | **Completed & Tested** | Full C++ & Backend Implemented |
+| **Image** | Spatial Quadtree, Color Quantization, 2D Wavelets | **Quadtree**, **KD-Tree**, Wavelet Matrix | **Jibran** | *Stubs & Architecture Ready* | [Teammate Guide](docs/development/TEAM_IMPLEMENTATION_GUIDE.md#1-image-compression-module-jibran) |
+| **Audio** | 1D Wavelet Tree, Delta + RLE, LPC + Huffman | **Wavelet Tree**, Delta-RLE, Predictor Heap | **Parth** | *Stubs & Architecture Ready* | [Teammate Guide](docs/development/TEAM_IMPLEMENTATION_GUIDE.md#2-audio-compression-module-parth) |
+| **Video** | Inter-frame Quadtree Delta, 3D Octree | **Quadtree**, **3D Octree** | **Sangram** | *Stubs & Architecture Ready* | [Teammate Guide](docs/development/TEAM_IMPLEMENTATION_GUIDE.md#3-video-compression-module-sangram) |
+
+> 📖 **Teammates:** For detailed instructions on function signatures to implement (`compress` & `decompress`), file paths, data structures, and CLI test commands, see **[`docs/development/TEAM_IMPLEMENTATION_GUIDE.md`](docs/development/TEAM_IMPLEMENTATION_GUIDE.md)**.
+
+---
+
+## 1. System Architecture
 
 ```text
-React Native Mobile App
-          │
-          │ HTTP / REST
-          ▼
-Node.js + Typescrip Server
-          │
-          │ Process communication
-          ▼
-C++ Compression Engine
+                                USER
+                                 │
+                                 ▼
+                     ┌───────────────────────┐
+                     │     Web Frontend      │
+                     │                       │
+                     │  React + TypeScript   │
+                     │  Vite + Tailwind CSS  │
+                     │                       │
+                     │ • Modality Switcher   │
+                     │   (Text/Image/Audio/  │
+                     │    Video)             │
+                     │ • Drag-and-drop file  │
+                     │ • Compress / Restore  │
+                     │ • Side-by-side Bench  │
+                     │ • Metrics & Downloads │
+                     └───────────┬───────────┘
+                                 │
+                                 │ HTTP / REST API (Multipart uploads up to 1 GB)
+                                 ▼
+                     ┌───────────────────────┐
+                     │    Backend Server     │
+                     │                       │
+                     │  Node.js + TypeScript │
+                     │  Fastify              │
+                     │                       │
+                     │ • Validate requests   │
+                     │ • Disk stream storage │
+                     │ • Invokes C++ engine  │
+                     │ • Track job history   │
+                     │ • Serves Web SPA      │
+                     └───────────┬───────────┘
+                                 │
+                                 │ Process communication (CLI --json)
+                                 ▼
+                     ┌───────────────────────┐
+                     │   C++ Compression     │
+                     │        Engine         │
+                     │                       │
+                     │  Native C++17/20      │
+                     │  • Text: LZW, Huffman,│
+                     │    BWT+MTF (Bhavesh)  │
+                     │  • Image stubs:       │
+                     │    Quadtree (Jibran)  │
+                     │  • Audio stubs:       │
+                     │    Wavelet (Parth)    │
+                     │  • Video stubs:       │
+                     │    Interframe(Sangram)│
+                     └───────────┬───────────┘
+                                 │
+                                 ▼
+                     ┌───────────────────────┐
+                     │     File Storage      │
+                     │                       │
+                     │ • Uploaded files      │
+                     │ • Compressed (.adsc)  │
+                     │ • Restored files      │
+                     │ • Metadata (meta.json)│
+                     └───────────────────────┘
 ```
-
-### Responsibilities
-
-| Module              | Responsibility                                                       |
-| ------------------- | -------------------------------------------------------------------- |
-| `mobile/`           | UI, file selection, user input, results and visualization            |
-| `server/`           | REST API, validation, file handling, jobs and communication with C++ |
-| `compression-core/` | Actual compression/decompression algorithms and data structures      |
-| `shared/`           | Shared API schemas and types                                         |
-| `docs/`             | Architecture, algorithms and API documentation                       |
-| `scripts/`          | Build, development and testing scripts                               |
-| `docker/`           | Containerization configuration                                       |
-
-**Important:** The compression logic must remain inside `compression-core`. The server should not implement compression algorithms.
 
 ---
 
-## 2. Project Structure
+## 2. Technology Stack
+
+| Component | Technology | Purpose |
+|---|---|---|
+| **Web Frontend** | React 18 + TypeScript + Vite | Interactive multi-modal dashboard & benchmarking UI |
+| **Styling** | Tailwind CSS + Lucide Icons | Modern dark-theme UI with responsive status badges |
+| **Backend Server** | Node.js + TypeScript + Fastify | High-throughput streaming REST API & orchestration |
+| **File Uploads** | `@fastify/multipart` (Streaming) | Direct stream-to-disk up to 1 GB without RAM exhaustion |
+| **Static Delivery** | `@fastify/static` | Unified single-port deployment of frontend on port 3000 |
+| **Compression Engine** | Native C++17/20 | Custom data structures, bit-level I/O, modular architecture |
+| **Build System** | CMake 3.16+ | C++ library, test suite, and CLI executable |
+| **Containerization** | Docker & Docker Compose | Multi-stage production container build & zero-config run |
+
+---
+
+## 3. Running with Docker (Recommended)
+
+Bitshrink provides flexible Docker configurations:
+- **Modular Multi-Container Architecture (Docker Compose)**: Separates the backend API server (`docker/server/Dockerfile`) and React frontend (`docker/web/Dockerfile`) reverse-proxied with Nginx.
+- **Unified Single-Port Container (`Dockerfile`)**: Builds and serves both the Fastify backend and the compiled React frontend together on port **3000**.
+- **Standalone C++ Core Engine (`docker/compression-core/Dockerfile`)**: Build and run the native CLI engine independently.
+
+### Quick Start with Docker Compose (Frontend + Server)
+```bash
+# Build and run Bitshrink (Frontend on :80, API Server on :3000)
+docker compose up --build
+```
+Open **[http://localhost](http://localhost)** in your browser.
+
+### Building Services Individually
+```bash
+# 1. Build and run the Backend Server (Port 3000)
+docker build -t bitshrink-server:latest -f docker/server/Dockerfile .
+docker run -p 3000:3000 bitshrink-server:latest
+
+# 2. Build and run the Frontend Web UI (Port 80)
+docker build -t bitshrink-web:latest -f docker/web/Dockerfile .
+docker run -p 80:80 -e BACKEND_HOST=host.docker.internal bitshrink-web:latest
+
+# 3. Or build and run the Unified All-in-One Container (Port 3000)
+docker build -t bitshrink:latest -f Dockerfile .
+docker run -p 3000:3000 bitshrink:latest
+```
+
+
+---
+
+## 4. Local Development Setup
+
+### Prerequisites
+- **GCC / G++** with C++20 support (GCC 11+)
+- **CMake** (3.16+)
+- **Node.js** (v20+) and **npm**
+
+### Build All Modules
+```bash
+./scripts/build.sh
+```
+
+### Run Full Test Suite
+```bash
+./scripts/test.sh
+```
+Runs both:
+1. **C++ Engine Unit Tests**: Trie, Min-Heap, LZW roundtrip, Huffman roundtrip, BWT roundtrip.
+2. **Fastify Backend Integration Tests**: Health check, compression, decompression, roundtrip hash verification, algorithm comparison, job history, and file download.
+
+### Start the Application Locally
+```bash
+./scripts/start.sh
+```
+Open **[http://localhost:3000](http://localhost:3000)** to view the web dashboard.
+
+---
+
+## 5. Standalone C++ Engine CLI
+
+The C++ engine can also be executed directly from the command line:
+
+```bash
+# Text Compression (LZW)
+./compression-core/build/bin/compression-engine compress -m text -a lzw -i input.txt -o compressed.adsc --json
+
+# Text Decompression (auto-detects algorithm from header)
+./compression-core/build/bin/compression-engine decompress -i compressed.adsc -o restored.txt --json
+
+# Text Algorithm Comparison (Benchmarks LZW, Huffman, and BWT)
+./compression-core/build/bin/compression-engine compare -i input.txt --json
+
+# Image Compression Stub (Module for Jibran)
+./compression-core/build/bin/compression-engine compress -m image -a image_quadtree -i photo.ppm -o photo.adsc --json
+
+# Audio Compression Stub (Module for Parth)
+./compression-core/build/bin/compression-engine compress -m audio -a audio_wavelet -i audio.raw -o audio.adsc --json
+
+# Video Compression Stub (Module for Sangram)
+./compression-core/build/bin/compression-engine compress -m video -a video_interframe -i video.yuv -o video.adsc --json
+```
+
+---
+
+## 6. Project Structure
 
 ```text
 ADS-Mini-Project/
 │
-├── mobile/                  # React Native application
+├── Dockerfile                         # Unified multi-stage production container
+├── docker-compose.yml                 # Multi-container orchestrator (server + frontend)
+├── .dockerignore                      # Docker ignore rules (optimized build context)
 │
-├── server/                  # Node.js + TypeScript
+├── docker/                            # Modular Docker container configurations
+│   ├── server/                        # Fastify API Server + C++ Engine Dockerfile
+│   ├── web/                           # React + Vite Web Frontend Nginx Dockerfile
+│   ├── frontend/                      # Frontend alias Dockerfile
+│   └── compression-core/              # Standalone C++ Engine CLI Dockerfile
+│
+├── web/                               # React + TypeScript Web Frontend
 │   ├── src/
-│   │   ├── routes/
-│   │   ├── controllers/
-│   │   ├── services/
-│   │   ├── middleware/
-│   │   ├── types/
-│   │   ├── utils/
-│   │   └── config/
-│   └── tests/
+│   │   ├── components/                # FileDropzone, AlgorithmSelector, CompressionStats, Navbar
+│   │   ├── pages/                     # Workspace, Compare, History, About
+│   │   ├── services/                  # compressionApi.ts (REST client)
+│   │   ├── types/                     # TypeScript interfaces
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   ├── package.json
+│   └── vite.config.ts
 │
-├── compression-core/        # C++17/20 compression engine
+├── server/                            # Fastify + TypeScript Backend
+│   ├── src/
+│   │   ├── controllers/               # CompressionController.ts (1 GB streaming pipeline)
+│   │   ├── routes/                    # apiRoutes.ts
+│   │   ├── services/                  # storageService.ts, compressionEngineService.ts
+│   │   ├── config/                    # Config and env vars
+│   │   ├── types/                     # Request/response interfaces
+│   │   └── index.ts                   # Fastify server & static web server
+│   ├── storage/jobs/                  # Storage directory for jobs
+│   ├── tests/                         # server.test.ts (integration tests)
+│   └── package.json
+│
+├── compression-core/                  # Native C++17/20 Engine
 │   ├── include/
-│   ├── src/
-│   ├── tests/
-│   └── cli/
+│   │   ├── core/                      # Types.hpp, ICompressor.hpp, FileHeader.hpp, Engine.hpp
+│   │   ├── datastructures/            # Trie.hpp, MinHeap.hpp, BinaryTree.hpp
+│   │   ├── algorithms/
+│   │   │   ├── text/                  # LZWCompressor.hpp, HuffmanCompressor.hpp, BWTCompressor.hpp
+│   │   │   ├── image/                 # ImageCompressor.hpp (Jibran)
+│   │   │   ├── audio/                 # AudioCompressor.hpp (Parth)
+│   │   │   └── video/                 # VideoCompressor.hpp (Sangram)
+│   │   └── io/                        # BitStream.hpp (BitWriter, BitReader)
+│   ├── src/                           # Implementations of headers
+│   ├── tests/                         # test_text_compression.cpp (unit & roundtrip tests)
+│   ├── cli/                           # main.cpp (CLI executable with -m modality & --json)
+│   └── CMakeLists.txt
 │
 ├── shared/
-│   ├── schemas/
-│   └── types/
+│   └── types/                         # Shared type definitions (compression.ts)
 │
 ├── docs/
-│   ├── architecture/
-│   ├── algorithms/
-│   ├── api/
-│   └── development/
+│   ├── development/
+│   │   └── TEAM_IMPLEMENTATION_GUIDE.md  # Detailed guide for Jibran, Parth, and Sangram
+│   ├── architecture/                  # ARCHITECTURE.md
+│   ├── algorithms/                    # TEXT_COMPRESSION.md
+│   └── api/                           # API_SPEC.md
 │
-├── scripts/
-│   ├── build/
-│   ├── dev/
-│   └── test/
-│
-└── docker/
-    ├── server/
-    └── compression-core/
+└── scripts/
+    ├── build.sh                       # Builds C++ core, server, and web frontend
+    ├── start.sh                       # Starts the fullstack server
+    └── test.sh                        # Runs both C++ and server test suites
 ```
-
-`mobile/` is intentionally empty at the beginning. The React Native application will be initialized separately by the teammate responsible for the mobile module.
-
----
-
-## 3. Compression Algorithms
-
-The application will support four types of data.
-
-### Text
-
-* **LZW** — Trie
-* **Static Huffman** — Min-Heap + Binary Tree
-* **BWT** — Suffix Array + Move-to-Front
-
-### Image
-
-* **Spatial Quadtree**
-* **Color Quantization** — KD-Tree
-* **2D Haar Wavelets**
-
-### Audio
-
-* **1D Wavelet Tree**
-* **Delta Encoding + RLE**
-* **Linear Predictive Coding + Huffman**
-
-### Video
-
-* **Inter-frame Quadtree**
-* **3D Octree**
-
-These algorithms and their associated data structures follow the original project specification.
-
----
-
-## 4. Compression Core
-
-`compression-core/` is a **standalone C++17/20 module** containing all compression and decompression logic.
-
-### Folder responsibilities
-
-```text
-compression-core/
-│
-├── include/
-│   ├── core/
-│   ├── algorithms/
-│   ├── datastructures/
-│   └── io/
-│
-├── src/
-│   ├── core/
-│   ├── algorithms/
-│   ├── datastructures/
-│   └── io/
-│
-├── tests/
-└── cli/
-```
-
-### `include/`
-
-Contains **public C++ headers/interfaces** used by the compression engine.
-
-* `core/` — Common interfaces, configuration, result/metric structures and core abstractions.
-* `algorithms/` — Header files for all compression/decompression algorithms.
-* `datastructures/` — Header files for the data structures used by the algorithms.
-* `io/` — Binary and bit-level reading/writing interfaces.
-
-### `src/`
-
-Contains the **implementations** corresponding to the headers in `include/`.
-
-* `core/` — Core engine implementation.
-* `algorithms/` — Actual compression/decompression implementations.
-* `datastructures/` — Implementations of supporting data structures.
-* `io/` — Binary file and bit-level I/O implementations.
-
-### `tests/`
-
-Contains tests for the compression core.
-
-Tests should cover:
-
-* Compression
-* Decompression
-* Round-trip correctness
-* Edge cases
-* Data-structure correctness
-* Performance/metrics where relevant
-
-### `cli/`
-
-Contains the command-line entry point for the C++ engine.
-
-The CLI allows the compression core to be tested independently from the server.
-
-For example:
-
-```text
-compression-engine
-        │
-        ├── compress
-        └── decompress
-```
-
-The Node.js server will initially communicate with this compiled executable.
-
-### Important separation
-
-```text
-include/       → What the module exposes
-src/           → How it is implemented
-tests/         → Whether it works correctly
-cli/           → How the engine is executed externally
-```
-
-The compression core must **not depend on Node.js, React Native, HTTP, or Fastify**.
-
----
-
-## 5. Server
-
-The backend will use:
-
-* **Node.js**
-* **TypeScript**
-* **Fastify**
-
-The server handles:
-
-```text
-HTTP Request
-     ↓
-Validation
-     ↓
-File handling
-     ↓
-Algorithm/parameter selection
-     ↓
-Invoke C++ engine
-     ↓
-Collect output + metrics
-     ↓
-HTTP Response
-```
-
-Initially, Node.js will communicate with the C++ engine by launching the compiled C++ executable.
-
-The server should **orchestrate** compression, not perform the compression itself.
-
----
-
-## 6. API
-
-The initial API will provide endpoints such as:
-
-```text
-POST /api/compress
-POST /api/decompress
-```
-
-A compression request should specify the required information, such as:
-
-```text
-modality
-algorithm
-input file
-algorithm parameters
-```
-
-The response should provide the generated output and relevant metrics, such as:
-
-```text
-original size
-compressed size
-compression ratio
-space saved
-execution time
-algorithm
-```
-
-The exact API contract will be documented in:
-
-```text
-docs/api/
-```
-
----
-
-## 7. Development Rules
-
-### Keep modules independent
-
-Do not put C++ compression logic inside the server or mobile application.
-
-### Use the appropriate language
-
-* Mobile → TypeScript / React Native
-* Server → TypeScript / Node.js
-* Compression → C++17/20
-
-### Test independently
-
-Every compression algorithm should have tests for:
-
-* Compression
-* Decompression
-* Correctness / round-trip behaviour
-* Edge cases
-* Relevant performance metrics
-
-### Keep documentation updated
-
-Algorithm explanations belong in:
-
-```text
-docs/algorithms/
-```
-
-Architecture decisions belong in:
-
-```text
-docs/architecture/
-```
-
-API specifications belong in:
-
-```text
-docs/api/
-```
-
----
-
-## 8. Development Workflow
-
-Each contributor should work inside the module they are assigned to.
-
-```text
-1. Create / switch to your branch
-2. Implement your assigned module
-3. Test locally
-4. Update relevant documentation
-5. Commit changes
-6. Push branch
-7. Create Pull Request
-```
-
-Before merging, ensure that your changes do not break the other modules.
-
----
-
-## 9. Build Order
-
-The project should be developed in this order:
-
-```text
-1. Compression Core
-        ↓
-2. C++ CLI / standalone testing
-        ↓
-3. Node.js Server
-        ↓
-4. Server ↔ C++ integration
-        ↓
-5. React Native application
-        ↓
-6. Mobile ↔ Server integration
-        ↓
-7. End-to-end testing
-```
-
-This keeps the core algorithms testable before introducing networking and mobile complexity.
-
----
-
-## 10. Current Status
-
-**Stage:** Project structure / initial setup
-
-Next steps:
-
-* Initialize React Native inside `mobile/`
-* Initialize Node.js + TypeScript + Fastify inside `server/`
-* Initialize CMake-based C++ project inside `compression-core/`
-* Define the C++ ↔ server interface
-* Implement algorithms incrementally
-* Build the REST API
-* Connect the mobile application

@@ -100,9 +100,9 @@ void runRoundTripTests(const std::string& label, const std::string& data) {
 }
 
 int main() {
-    std::cout << "========================================\n";
+    std::cout << "\n";
     std::cout << "Running ADSC Compression Core Test Suite\n";
-    std::cout << "========================================\n";
+    std::cout << "\n";
 
     testTrie();
     testMinHeap();
@@ -135,8 +135,8 @@ int main() {
 )";
     runRoundTripTests("C++ Code Sample", codeSample);
 
-    std::cout << "\n========================================\n";
+    std::cout << "\n\n";
     std::cout << "All Compression Tests Passed Successfully!\n";
-    std::cout << "========================================\n";
+    std::cout << "\n";
     return 0;
 }

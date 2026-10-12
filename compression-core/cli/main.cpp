@@ -158,14 +158,14 @@ int main(int argc, char* argv[]) {
                 std::cout << "{\"inputPath\":\"" << inputPath << "\",\"results\":[";
             } else {
                 std::cout << "Algorithm Comparison for: " << inputPath << "\n";
-                std::cout << "----------------------------------------------------------------------------------------\n";
+                std::cout << "\n";
                 std::cout << std::left << std::setw(15) << "Algorithm"
                           << std::setw(16) << "Original (B)"
                           << std::setw(16) << "Compressed (B)"
                           << std::setw(14) << "Ratio"
                           << std::setw(14) << "Saved (%)"
                           << std::setw(12) << "Time (ms)" << "\n";
-                std::cout << "----------------------------------------------------------------------------------------\n";
+                std::cout << "\n";
             }
 
             bool first = true;
@@ -202,7 +202,7 @@ int main(int argc, char* argv[]) {
             if (jsonOutput) {
                 std::cout << "]}\n";
             } else {
-                std::cout << "----------------------------------------------------------------------------------------\n";
+                std::cout << "\n";
             }
             return 0;
         } else {
