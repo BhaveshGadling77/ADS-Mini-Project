@@ -1,0 +1,40 @@
+services:
+  # Fastify REST API Backend + Native C++ Compression Core Engine
+  server:
+    build:
+      context: .
+      dockerfile: docker/server/Dockerfile
+    image: bitshrink-server:latest
+    container_name: bitshrink-server
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - NODE_ENV=production
+      - MAX_FILE_SIZE_MB=1024
+      - ENGINE_BINARY_PATH=/app/bin/compression-engine
+      - STORAGE_DIR=/app/storage/jobs
+    volumes:
+      - bitshrink-storage:/app/storage/jobs
+
+  # React + Vite Web Frontend (Nginx Reverse Proxy & Static Asset Server)
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
+    image: bitshrink-frontend:latest
+    container_name: bitshrink-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    environment:
+      - BACKEND_HOST=server
+      - BACKEND_PORT=3000
+
+volumes:
+  bitshrink-storage:
+    driver: local
