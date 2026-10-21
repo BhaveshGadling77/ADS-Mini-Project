@@ -34,7 +34,7 @@ LIB_SOURCES = \
 
 LIB_OBJECTS = $(LIB_SOURCES:.cpp=.o)
 
-.PHONY: all clean run test
+.PHONY: all clean run test test_predictor
 
 all: $(TARGET)
 
@@ -45,7 +45,7 @@ $(TARGET): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJECTS) $(TARGET) compare_images test_roundtrip tests/test_roundtrip.o
+	rm -f $(OBJECTS) $(TARGET) compare_images test_roundtrip tests/test_roundtrip.o test_spatial_predictor tests/test_spatial_predictor.o
 
 run: $(TARGET)
 	./$(TARGET)
@@ -56,5 +56,12 @@ compare_images: compare_images.cpp image/bmp_reader.cpp
 test_roundtrip: tests/test_roundtrip.o $(LIB_OBJECTS)
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-test: test_roundtrip
+test_spatial_predictor: tests/test_spatial_predictor.o compression/spatial_predictor.o
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+test_predictor: test_spatial_predictor
+	./test_spatial_predictor
+
+test: test_roundtrip test_spatial_predictor
 	./test_roundtrip
+	./test_spatial_predictor
