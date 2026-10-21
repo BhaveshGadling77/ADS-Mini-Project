@@ -6,6 +6,8 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <stdexcept>
+#include <cerrno>
 
 #include "../image/bmp_reader.h"
 #include "data_preprocessor.h"
@@ -15,6 +17,30 @@
 #include "bit_writer.h"
 
 using namespace std;
+
+// RAII wrapper for file descriptors
+class FdGuard
+{
+public:
+    explicit FdGuard(int fd) : fd_(fd) {}
+    ~FdGuard()
+    {
+        if (fd_ >= 0)
+            close(fd_);
+    }
+    FdGuard(const FdGuard &) = delete;
+    FdGuard &operator=(const FdGuard &) = delete;
+    int get() const { return fd_; }
+    int release()
+    {
+        int fd = fd_;
+        fd_ = -1;
+        return fd;
+    }
+
+private:
+    int fd_;
+};
 
 void compressImage(
     const char *inputFilename,
@@ -27,7 +53,7 @@ void compressImage(
     cout << "Height: " << image.height << "\n";
     cout << "Pixels: " << image.pixels.size() << "\n";
 
-    for (int i = 0; i < 5 && i < image.pixels.size(); i++)
+    for (size_t i = 0; i < 5 && i < image.pixels.size(); i++)
     {
         cout << "Pixel " << i << ": "
              << (int)image.pixels[i].r << " "
@@ -39,7 +65,7 @@ void compressImage(
     vector<unsigned char> data = prepareData(image);
     cout << "Data bytes: " << data.size() << "\n";
 
-    for (int i = 0; i < 15 && i < data.size(); i++)
+    for (size_t i = 0; i < 15 && i < data.size(); i++)
     {
         cout << (int)data[i] << " ";
     }
@@ -51,7 +77,7 @@ void compressImage(
 
     cout << "Unique bytes: " << freq.size() << "\n";
 
-    for (auto entry : freq)
+    for (const auto &entry : freq)
     {
         cout << entry.first << " -> " << entry.second << "\n";
     }
@@ -62,13 +88,13 @@ void compressImage(
 
     cout << "\nHuffman Codes:\n";
 
-    for (auto p : freq)
+    for (const auto &p : freq)
     {
         cout << p.first << " -> " << codes[p.first] << "\n";
     }
 
     // 5. Prepare compressed file header
-    FileHeader header;
+    FileHeader header{};
 
     header.magic[0] = 'H';
     header.magic[1] = 'U';
@@ -77,9 +103,9 @@ void compressImage(
 
     header.width = image.width;
     header.height = image.height;
-    header.originalSize = data.size();
-    header.validBits = 0;
-    header.uniqueSymbols = freq.size();
+    header.originalSize = static_cast<int>(data.size());
+    header.validBits = 0; // will be updated after writing encoded data
+    header.uniqueSymbols = static_cast<int>(freq.size());
 
     // 6. Open compressed file
     int fd = open(
@@ -92,6 +118,8 @@ void compressImage(
         throw runtime_error("Failed to open output file");
     }
 
+    FdGuard fdGuard(fd);
+
     // 7. Write header
     writeFileHeader(fd, header);
 
@@ -100,14 +128,23 @@ void compressImage(
 
     // 9. Write Huffman encoded data
     vector<int> encodedData(data.begin(), data.end());
-    BitWriter(fd, codes, encodedData);
+    int validBits = BitWriter(fd, codes, encodedData);
+
+    // 10. Update validBits in the header
+    header.validBits = validBits;
+    off_t validBitsOffset = offsetof(FileHeader, validBits);
+    if (lseek(fd, validBitsOffset, SEEK_SET) == -1)
+    {
+        throw runtime_error("Failed to seek to update validBits");
+    }
+
+    ssize_t n = write(fd, &header.validBits, sizeof(header.validBits));
+    if (n != sizeof(header.validBits))
+    {
+        throw runtime_error("Failed to write validBits");
+    }
 
     cout << "Valid bits: " << header.validBits << "\n";
 
-    // 10. Update validBits in the header
-    lseek(fd, 16, SEEK_SET);
-    write(fd, &header.validBits, sizeof(header.validBits));
-
-    // 11. Close compressed file
-    close(fd);
+    // 11. FdGuard closes fd automatically
 }

@@ -1,9 +1,9 @@
 #ifndef FILE_HEADER_H
 #define FILE_HEADER_H
 
-using namespace std;
 #include <vector>
 #include <utility>
+
 struct FileHeader
 {
     char magic[4];
@@ -25,9 +25,9 @@ struct FrequencyEntry
 };
 
 FileHeader readFileHeader(int fd);
-vector<pair<int, int>> readFrequencyTable(int fd, int uniqueSymbols);
+std::vector<std::pair<int, int>> readFrequencyTable(int fd, int uniqueSymbols);
 
 void writeFileHeader(int fd, const FileHeader &header);
-void writeFrequencyTable(int fd, const vector<pair<int, int>> &freq);
+void writeFrequencyTable(int fd, const std::vector<std::pair<int, int>> &freq);
 
-#endif  
+#endif

@@ -34,6 +34,7 @@ struct DIBHeader
     uint32_t colorsUsed;
     uint32_t importantColors;
 };
+#pragma pack(pop)
 
 struct BMPImage
 {
@@ -46,7 +47,7 @@ int openBMP(const char *filename);
 BMPFileHeader readBMPFileHeader(int fd);
 DIBHeader readDIBHeader(int fd);
 void validateBMP(const BMPFileHeader &fileHeader, const DIBHeader &dibHeader);
-std::vector<Pixel> readPixelData(int fd, const DIBHeader &dibHeader);
+std::vector<Pixel> readPixelData(int fd, const BMPFileHeader &fileHeader, const DIBHeader &dibHeader);
 BMPImage readImage(const char *filename);
 
 

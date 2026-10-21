@@ -4,11 +4,8 @@
 #include <iostream>
 #include <cstdint>
 #include <stdexcept>
+#include <cmath>
 using namespace std;
-
-// TODO: Move and finalize the BMP parsing logic here.
-// This module is responsible only for reading the BMP file and returning
-// image information and pixel data.
 
 static_assert(sizeof(BMPFileHeader) == 14);
 static_assert(sizeof(DIBHeader) == 40);
@@ -19,8 +16,7 @@ int openBMP(const char *filename)
 
     if (fd < 0)
     {
-        cout << "Error opening BMP file" << endl;
-        exit(EXIT_FAILURE);
+        throw runtime_error(string("Failed to open BMP file: ") + filename);
     }
 
     return fd;
@@ -41,8 +37,7 @@ BMPFileHeader readBMPFileHeader(int fd)
     {
         throw runtime_error("Not a BMP file");
     }
-    cout << hex << "Signature read: 0x"
-     << header.signature << dec << endl;
+
     return header;
 }
 
@@ -91,16 +86,25 @@ void validateBMP(const BMPFileHeader &fileHeader, const DIBHeader &dibHeader)
     {
         throw runtime_error("Compressed BMP files are not supported");
     }
+
+    // Validate dimensions
+    int32_t absHeight = dibHeader.height < 0 ? -dibHeader.height : dibHeader.height;
+    if (dibHeader.width <= 0 || absHeight <= 0)
+    {
+        throw runtime_error("Invalid BMP dimensions");
+    }
 }
 
 vector<Pixel> readPixelData(int fd, const BMPFileHeader &fileHeader, const DIBHeader &dibHeader)
 {
     int width = dibHeader.width;
-    int height = dibHeader.height;
+    // Handle top-down BMPs (negative height)
+    bool topDown = dibHeader.height < 0;
+    int height = topDown ? -dibHeader.height : dibHeader.height;
 
     int rowSize = ((width * 3 + 3) / 4) * 4;
 
-    vector<Pixel> pixels(width * height);
+    vector<Pixel> pixels(static_cast<size_t>(width) * height);
     vector<unsigned char> row(rowSize);
 
     if (lseek(fd, fileHeader.pixelDataOffset, SEEK_SET) == -1)
@@ -117,12 +121,15 @@ vector<Pixel> readPixelData(int fd, const BMPFileHeader &fileHeader, const DIBHe
             throw runtime_error("Failed to read pixel data");
         }
 
-        int destinationRow = height - 1 - rowIndex;
+        // Bottom-up BMP: first row in file is last row in image
+        // Top-down BMP: first row in file is first row in image
+        int destinationRow = topDown ? rowIndex : (height - 1 - rowIndex);
 
         for (int col = 0; col < width; col++)
         {
             int index = col * 3;
 
+            // BMP stores BGR; convert to RGB
             pixels[destinationRow * width + col].b = row[index];
             pixels[destinationRow * width + col].g = row[index + 1];
             pixels[destinationRow * width + col].r = row[index + 2];
@@ -136,19 +143,28 @@ BMPImage readImage(const char *filename)
 {
     int fd = openBMP(filename);
 
-    BMPFileHeader fileHeader = readBMPFileHeader(fd);
-    DIBHeader dibHeader = readDIBHeader(fd);
+    try
+    {
+        BMPFileHeader fileHeader = readBMPFileHeader(fd);
+        DIBHeader dibHeader = readDIBHeader(fd);
 
-    validateBMP(fileHeader, dibHeader);
+        validateBMP(fileHeader, dibHeader);
 
-    vector<Pixel> pixels = readPixelData(fd, fileHeader, dibHeader);
+        vector<Pixel> pixels = readPixelData(fd, fileHeader, dibHeader);
 
-    close(fd);
+        close(fd);
 
-    BMPImage image;
-    image.width = dibHeader.width;
-    image.height = dibHeader.height;
-    image.pixels = pixels;
+        BMPImage image;
+        image.width = dibHeader.width;
+        // Store absolute height in BMPImage
+        image.height = dibHeader.height < 0 ? -dibHeader.height : dibHeader.height;
+        image.pixels = pixels;
 
-    return image;
+        return image;
+    }
+    catch (...)
+    {
+        close(fd);
+        throw;
+    }
 }

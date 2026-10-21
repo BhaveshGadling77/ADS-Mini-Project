@@ -1,47 +1,68 @@
 #include "bit_writer.h"
-#include <fcntl.h>
 #include <unistd.h>
-#include <iostream>
+#include <cerrno>
+#include <stdexcept>
 #include <vector>
 #include <string>
 
 using namespace std;
 
-void BitWriter(int fd, const vector<string> &codes, const vector<int> &data)
+// Write exactly `size` bytes, retrying on EINTR and partial writes.
+static void writeAll(int fd, const void *buf, size_t size)
+{
+    const unsigned char *ptr = static_cast<const unsigned char *>(buf);
+    size_t written = 0;
+
+    while (written < size)
+    {
+        ssize_t n = write(fd, ptr + written, size - written);
+
+        if (n < 0)
+        {
+            if (errno == EINTR)
+                continue;
+            throw runtime_error("BitWriter: write failed");
+        }
+
+        if (n == 0)
+            throw runtime_error("BitWriter: write returned 0");
+
+        written += static_cast<size_t>(n);
+    }
+}
+
+int BitWriter(int fd, const vector<string> &codes, const vector<int> &data)
 {
     Buffer buffer;
-
     buffer.byte = 0;
     buffer.bitCount = 0;
-    buffer.size = 8;
 
-    for (int i = 0; i < data.size(); i++)
+    for (size_t i = 0; i < data.size(); i++)
     {
-        for (char ch : codes[data[i]])
+        const string &code = codes[data[i]];
+        for (char ch : code)
         {
-            if (buffer.bitCount == buffer.size)
-            {
-                write(fd, &buffer.byte, 1);
+            // Pack bits MSB-first: shift left and OR in the new bit
+            buffer.byte = static_cast<unsigned char>((buffer.byte << 1) | (ch - '0'));
+            buffer.bitCount++;
 
+            if (buffer.bitCount == 8)
+            {
+                writeAll(fd, &buffer.byte, 1);
                 buffer.byte = 0;
                 buffer.bitCount = 0;
             }
-
-            buffer.byte = (buffer.byte << 1) | (ch - '0');
-            buffer.bitCount++;
         }
     }
 
+    // Write the final partially filled byte, padded with zeros in the LSB positions
     if (buffer.bitCount > 0)
     {
-        while (buffer.bitCount < buffer.size)
-        {
-            buffer.byte = buffer.byte << 1;
-            buffer.bitCount++;
-        }
-
-        write(fd, &buffer.byte, 1);
+        int validBits = buffer.bitCount;
+        buffer.byte = static_cast<unsigned char>(buffer.byte << (8 - buffer.bitCount));
+        writeAll(fd, &buffer.byte, 1);
+        return validBits;
     }
 
-    close(fd);
+    return 0; // No partial byte — all bytes were full (or no bits written)
 }

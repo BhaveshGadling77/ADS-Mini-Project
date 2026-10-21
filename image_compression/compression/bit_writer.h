@@ -5,11 +5,13 @@
 #include <vector>
 
 struct Buffer {
-    char byte;
+    unsigned char byte;
     int bitCount;
-    int size;
 };
 
-void BitWriter(int fd, const std::vector<std::string> &codes, const std::vector<int> &data);
+// Writes Huffman-encoded bits for each symbol in data.
+// Returns the number of valid bits in the last byte (1-8), or 0 if no bits were written.
+// Does NOT close fd — caller retains ownership.
+int BitWriter(int fd, const std::vector<std::string> &codes, const std::vector<int> &data);
 
 #endif

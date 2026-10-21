@@ -1,6 +1,12 @@
-#include <bits/stdc++.h>
-using namespace std;
 #include "huffman.h"
+
+#include <queue>
+#include <vector>
+#include <string>
+#include <utility>
+#include <stdexcept>
+
+using namespace std;
 
 HuffmanNode *createNode(int data, int freq)
 {
@@ -44,10 +50,24 @@ void generateCodes(HuffmanNode *root, vector<string> &codes, string str)
 
 HuffmanNode *buildHuffmanTree(const vector<pair<int, int>> &freq)
 {
+    if (freq.empty())
+        return nullptr;
+
     priority_queue<HuffmanNode *, vector<HuffmanNode *>, Compare> minHeap;
-    for (int i = 0; i < freq.size(); i++)
+    for (size_t i = 0; i < freq.size(); i++)
     {
         minHeap.push(createNode(freq[i].first, freq[i].second));
+    }
+
+    // Single-symbol case: create a parent so the leaf gets code "0"
+    if (minHeap.size() == 1)
+    {
+        HuffmanNode *leaf = minHeap.top();
+        minHeap.pop();
+        HuffmanNode *parent = createNode('\0', leaf->freq);
+        parent->left = leaf;
+        // right stays nullptr — generateCodes will only descend left
+        return parent;
     }
 
     while (minHeap.size() > 1)
@@ -66,8 +86,10 @@ HuffmanNode *buildHuffmanTree(const vector<pair<int, int>> &freq)
 
 void huffmanEncoding(const vector<pair<int, int>> &freq, vector<string> &codes)
 {
+    if (freq.empty())
+        return;
+
     HuffmanNode *root = buildHuffmanTree(freq);
-    // Generate the codes for each character
     generateCodes(root, codes, "");
     destroyTree(root);
 }
