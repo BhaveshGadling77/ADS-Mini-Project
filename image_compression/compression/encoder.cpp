@@ -15,6 +15,7 @@
 #include "huffman.h"
 #include "../format/file_header.h"
 #include "bit_writer.h"
+#include "spatial_predictor.h"
 
 using namespace std;
 
@@ -63,6 +64,10 @@ void compressImage(
 
     // 2. Prepare byte data
     vector<unsigned char> data = prepareData(image);
+
+    // 2b. Apply left-neighbor spatial prediction to R, G, B channels
+    applySpatialPrediction(data, image.width, image.height);
+
     cout << "Data bytes: " << data.size() << "\n";
 
     for (size_t i = 0; i < 15 && i < data.size(); i++)
@@ -99,7 +104,7 @@ void compressImage(
     header.magic[0] = 'H';
     header.magic[1] = 'U';
     header.magic[2] = 'F';
-    header.magic[3] = '1';
+    header.magic[3] = '2';
 
     header.width = image.width;
     header.height = image.height;

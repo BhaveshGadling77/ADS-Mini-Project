@@ -21,6 +21,9 @@
 #include "../image/bmp_writer.h"
 #include "../compression/encoder.h"
 #include "../compression/decoder.h"
+#include "../compression/frequency.h"
+#include "../compression/huffman.h"
+#include "../compression/bit_writer.h"
 #include "../format/file_header.h"
 
 using namespace std;
@@ -920,6 +923,84 @@ void test_topdown_bmp()
     }
 }
 
+void test_legacy_huf1_compatibility()
+{
+    TEST("Legacy HUF1 compatibility: decode archive without spatial prediction");
+
+    // Generate a known image
+    BMPImage original = generateImage(4, 3, [](int x, int y) -> Pixel {
+        Pixel p;
+        p.r = static_cast<unsigned char>(10 + x * 20 + y * 30);
+        p.g = static_cast<unsigned char>(50 + x * 10 + y * 40);
+        p.b = static_cast<unsigned char>(100 + x * 5 + y * 15);
+        return p;
+    });
+
+    // Create raw pixel bytes (unpredicted)
+    vector<unsigned char> data;
+    for (const auto &p : original.pixels)
+    {
+        data.push_back(p.r);
+        data.push_back(p.g);
+        data.push_back(p.b);
+    }
+
+    // Calculate frequencies on raw unpredicted bytes
+    vector<pair<int, int>> freq = calculateFrequency(data);
+    vector<string> codes(256, "");
+    huffmanEncoding(freq, codes);
+
+    TempFile huf1File(".huf");
+    TempFile outFile(".bmp");
+
+    int fd = open(huf1File.path(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0)
+    {
+        FAIL("Failed to create test HUF1 file");
+        return;
+    }
+
+    // Manually serialize with legacy "HUF1" magic
+    FileHeader header{};
+    header.magic[0] = 'H';
+    header.magic[1] = 'U';
+    header.magic[2] = 'F';
+    header.magic[3] = '1';
+    header.width = original.width;
+    header.height = original.height;
+    header.originalSize = static_cast<int>(data.size());
+    header.validBits = 0;
+    header.uniqueSymbols = static_cast<int>(freq.size());
+
+    writeFileHeader(fd, header);
+    writeFrequencyTable(fd, freq);
+
+    vector<int> encodedData(data.begin(), data.end());
+    int validBits = BitWriter(fd, codes, encodedData);
+
+    header.validBits = validBits;
+    lseek(fd, offsetof(FileHeader, validBits), SEEK_SET);
+    write(fd, &header.validBits, sizeof(header.validBits));
+    close(fd);
+
+    try
+    {
+        // Decompress should detect HUF1 and NOT apply inverse prediction
+        decompressImage(huf1File.path(), outFile.path());
+        BMPImage reconstructed = readImage(outFile.path());
+
+        string err;
+        if (compareImages(original, reconstructed, err))
+            PASS();
+        else
+            FAIL(err);
+    }
+    catch (const exception &e)
+    {
+        FAIL(string("Exception: ") + e.what());
+    }
+}
+
 // ============================================================================
 // Main
 // ============================================================================
@@ -958,6 +1039,7 @@ int main()
     test_wide_image();
     test_tall_image();
     test_topdown_bmp();
+    test_legacy_huf1_compatibility();
 
     // --- Invalid-input tests ---
     cout << "\n--- Invalid Input Tests ---" << endl;

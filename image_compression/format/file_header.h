@@ -24,6 +24,13 @@ struct FrequencyEntry
     int frequency;
 };
 
+// Returns true if the archive uses HUF2 (Left-neighbor Spatial Prediction + Huffman)
+inline bool isSpatialPredictionHeader(const FileHeader &header)
+{
+    return header.magic[0] == 'H' && header.magic[1] == 'U' &&
+           header.magic[2] == 'F' && header.magic[3] == '2';
+}
+
 FileHeader readFileHeader(int fd);
 std::vector<std::pair<int, int>> readFrequencyTable(int fd, int uniqueSymbols);
 

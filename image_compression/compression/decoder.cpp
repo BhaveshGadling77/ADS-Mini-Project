@@ -9,6 +9,7 @@
 #include <iostream>
 #include "../image/bmp_writer.h"
 #include "../image/bmp_reader.h"
+#include "spatial_predictor.h"
 
 using namespace std;
 
@@ -56,6 +57,7 @@ void decompressImage(
     DecoderFdGuard fdGuard(fd);
 
     FileHeader header = readFileHeader(fd);
+    bool useSpatialPrediction = isSpatialPredictionHeader(header);
 
     // 2. Read frequency table
     int uniqueSymbols = header.uniqueSymbols;
@@ -155,6 +157,12 @@ void decompressImage(
     if (decodedData.size() != expectedSize)
     {
         throw runtime_error("Decoded data size mismatch");
+    }
+
+    // 6b. Reverse spatial prediction if HUF2 format was used
+    if (useSpatialPrediction)
+    {
+        applyInverseSpatialPrediction(decodedData, header.width, header.height);
     }
 
     // 7. Convert to pixels

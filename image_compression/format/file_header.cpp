@@ -60,7 +60,7 @@ FileHeader readFileHeader(int fd)
 
     readAll(fd, &header, sizeof(header));
 
-    if (memcmp(header.magic, "HUF1", 4) != 0)
+    if (memcmp(header.magic, "HUF1", 4) != 0 && memcmp(header.magic, "HUF2", 4) != 0)
     {
         throw runtime_error("Invalid compressed file format (bad magic)");
     }
