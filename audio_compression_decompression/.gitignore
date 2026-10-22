@@ -1,0 +1,29 @@
+# Compiled executables
+audioCompression.exe
+audioDecompression.exe
+
+# Temporary PCM audio files
+audio_temp_pcm.pcm
+audio_reconstructed_temp.pcm
+raw_audio.pcm
+reconstructed_audio.pcm
+
+# Generated compressed and output audio files
+compressed_audio.huf
+final_audio.mp3
+
+# Object files
+*.o
+*.obj
+
+# Debug files
+*.exe.debug
+*.pdb
+
+# IDE and editor files
+.vscode/
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
