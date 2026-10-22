@@ -2,7 +2,7 @@
 
 > **Module Owner:** Jibran Jamdar  
 > **Topic:** Lossless Image Compression & Decompression (C++17)  
-> **Repository Branch:** `Jibran/image_compression`
+> **Location:** `compression-core/modules/image/`
 
 ---
 
@@ -41,7 +41,7 @@ This module provides the core **Lossless Image Compression Engine** for the ADS 
 - **`image/bmp_reader.h` / `bmp_reader.cpp`**: Reads 24-bit uncompressed Windows BMP files, validates headers, handles 4-byte row padding, and inverts bottom-up scanlines into top-down RGB pixel arrays.
 - **`image/bmp_writer.h` / `bmp_writer.cpp`**: Serializes RGB pixels back into valid 24-bit BMP images with proper row padding and standard headers.
 - **`compression/frequency.h` / `frequency.cpp`**: Analyzes the raw pixel byte buffer and computes a 256-symbol frequency distribution.
-- **`compression/huffman.h` / `huffman.cpp`**: Implements the Huffman tree algorithm using standard priority queues (`std::priority_queue`) to generate prefix-free variable-length binary codes.
+- **Shared Huffman codec**: Uses `compression-core/include/algorithms/huffman/HuffmanCodec.hpp`, the same min-heap tree builder and code-table generator used by text compression. The image module retains its own HUF2 header and file-descriptor bitstream I/O.
 - **`compression/bit_writer.h` / `bit_writer.cpp`**: Buffers arbitrary bit sequences into byte boundaries and writes packed binary data to disk.
 - **`compression/bit_reader.h` / `bit_reader.cpp`**: Reads packed binary bitstreams bit-by-bit to traverse the Huffman tree during decoding.
 - **`format/file_header.h` / `file_header.cpp`**: Defines the custom compressed container (`ImageHeader`) storing magic signature, dimensions, and serialized frequency tables needed for decompression.
@@ -62,16 +62,16 @@ This module provides the core **Lossless Image Compression Engine** for the ADS 
 
 ### Build Instructions
 
-From within the `image_compression/` directory, simply run:
+From the repository root, run:
 
 ```bash
-make
+make -C compression-core/modules/image
 ```
 
 To clean all build artifacts and binaries:
 
 ```bash
-make clean
+make -C compression-core/modules/image clean
 ```
 
 ---
@@ -83,7 +83,7 @@ make clean
 Launch the interactive tool:
 
 ```bash
-./compressor
+cd compression-core/modules/image && ./compressor
 ```
 
 You will see the main menu:
@@ -107,7 +107,7 @@ Enter choice:
 An automated test script is provided to test all sample images:
 
 ```bash
-./scripts/test_images.sh
+cd compression-core/modules/image && ./scripts/test_images.sh
 ```
 
 The script will:
@@ -134,18 +134,18 @@ The script will:
 
 ---
 
-## 6. Backend / Server Integration Guide (For Bhavesh & Node.js Server)
+## 6. Standalone CLI invocation
 
-To integrate this engine with the Node.js / TypeScript REST server (`server/`):
+The API invokes the standalone binary, and it can also be run directly from the repository root:
 
-1. **Compilation**: The server build step can compile the binary using `make -C image_compression`.
-2. **Process Execution**: The server can spawn `./image_compression/compressor` using `child_process.spawn` or `execFile`.
-3. **Menu Automation**: Input parameters can be piped via stdin:
+1. **Compilation**: Build the standalone binary with `make -C compression-core/modules/image`.
+2. **GUI/API**: The server invokes `compression-core/modules/image/compressor` with `compress <input.bmp> <output.huf2>` or `decompress <input.huf2> <output.bmp>`.
+3. **Interactive CLI**: The binary also retains its menu mode. For automation, its menu can be driven through stdin:
    ```bash
    # Compression
-   printf "1\n<input_bmp_path>\n<output_compressed_path>\n0\n" | ./image_compression/compressor
+   printf "1\n<input_bmp_path>\n<output_compressed_path>\n0\n" | ./compression-core/modules/image/compressor
 
    # Decompression
-   printf "2\n<compressed_path>\n<output_decompressed_path>\n0\n" | ./image_compression/compressor
+   printf "2\n<compressed_path>\n<output_decompressed_path>\n0\n" | ./compression-core/modules/image/compressor
    ```
 4. **Validation**: Check for exit code `0` and grep for `Operation completed successfully.` in the process output.

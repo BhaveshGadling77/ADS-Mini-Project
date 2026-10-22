@@ -8,8 +8,34 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char *argv[])
 {
+    // Non-interactive entry point for the Fastify API and scripts:
+    // compressor compress <input.bmp> <output.huf2>
+    // compressor decompress <input.huf2> <output.bmp>
+    if (argc == 4)
+    {
+        string command = argv[1];
+        try
+        {
+            if (command == "compress")
+                compressImage(argv[2], argv[3]);
+            else if (command == "decompress")
+                decompressImage(argv[2], argv[3]);
+            else
+            {
+                cerr << "Usage: compressor <compress|decompress> <input> <output>\n";
+                return 2;
+            }
+            return 0;
+        }
+        catch (const exception &e)
+        {
+            cerr << "Image compression failed: " << e.what() << '\n';
+            return 1;
+        }
+    }
+
     int choice;
 
     while (true)

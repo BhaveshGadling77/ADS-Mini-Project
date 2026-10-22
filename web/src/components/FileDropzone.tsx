@@ -19,16 +19,20 @@ function formatBytes(bytes: number): string {
 
 const MODALITY_ACCEPT: Record<ModalityType, string> = {
   text: '.txt,.md,.json,.csv,.c,.cpp,.h,.hpp,.py,.js,.ts,.html,.xml,.log',
-  image: '.png,.jpg,.jpeg,.bmp,.ppm,.pgm,.pbm,.webp',
-  audio: '.wav,.mp3,.aac,.flac,.ogg,.raw',
-  video: '.mp4,.avi,.mov,.mkv,.webm,.y4m',
+  image: '.bmp',
+  audio: '.mp3',
+  video: '.yuv',
 };
 
 const MODALITY_HINT: Record<ModalityType, string> = {
   text: 'Supports .txt, .md, code, data files (up to 1 GB)',
-  image: 'Supports .png, .jpg, .bmp, .ppm (Module by Jibran)',
-  audio: 'Supports .wav, .mp3, PCM audio (Module by Parth)',
-  video: 'Supports .mp4, .avi, YUV video (Module by Sangram)',
+  image: '24-bit uncompressed BMP only · produces a lossless .huf2 archive',
+  audio: 'MP3 input · Huffman-codes decoded PCM into a .huf archive',
+  video: 'Raw YUV420 (.yuv) only · lossy prototype · requires dimensions',
+};
+
+const MODALITY_ARCHIVE: Record<ModalityType, string> = {
+  text: '.adsc', image: '.huf2', audio: '.huf', video: '.cmp',
 };
 
 export const FileDropzone: React.FC<FileDropzoneProps> = ({
@@ -63,9 +67,10 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
     }
   };
 
-  const acceptPattern = mode === 'compress' ? MODALITY_ACCEPT[modality] : '.adsc,*';
-  const hintText = mode === 'compress' ? MODALITY_HINT[modality] : 'Supports .adsc archive files produced by Bitshrink';
-  const dropTitle = mode === 'compress' ? `Drop your ${modality} file here` : 'Drop your compressed (.adsc) file here';
+  const archiveExtension = MODALITY_ARCHIVE[modality];
+  const acceptPattern = mode === 'compress' ? MODALITY_ACCEPT[modality] : archiveExtension;
+  const hintText = mode === 'compress' ? MODALITY_HINT[modality] : `Supports ${archiveExtension} ${modality} archives`;
+  const dropTitle = mode === 'compress' ? `Drop your ${modality} file here` : `Drop your compressed (${archiveExtension}) file here`;
 
   return (
     <div className="w-full">

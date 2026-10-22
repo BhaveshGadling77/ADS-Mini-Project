@@ -22,7 +22,7 @@
 #include "../compression/encoder.h"
 #include "../compression/decoder.h"
 #include "../compression/frequency.h"
-#include "../compression/huffman.h"
+#include "algorithms/huffman/HuffmanCodec.hpp"
 #include "../compression/bit_writer.h"
 #include "../format/file_header.h"
 
@@ -947,8 +947,11 @@ void test_legacy_huf1_compatibility()
 
     // Calculate frequencies on raw unpredicted bytes
     vector<pair<int, int>> freq = calculateFrequency(data);
-    vector<string> codes(256, "");
-    huffmanEncoding(freq, codes);
+    adsc::HuffmanCodec::Frequencies huffmanFrequencies{};
+    for (const auto &entry : freq)
+        huffmanFrequencies[entry.first] = static_cast<uint64_t>(entry.second);
+    const auto huffmanTree = adsc::HuffmanCodec::buildTree(huffmanFrequencies);
+    const auto codes = adsc::HuffmanCodec::buildCodeTable(huffmanTree);
 
     TempFile huf1File(".huf");
     TempFile outFile(".bmp");

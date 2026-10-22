@@ -31,7 +31,7 @@ static void writeAll(int fd, const void *buf, size_t size)
     }
 }
 
-int BitWriter(int fd, const vector<string> &codes, const vector<int> &data)
+int BitWriter(int fd, const adsc::HuffmanCodec::CodeTable &codes, const vector<int> &data)
 {
     Buffer buffer;
     buffer.byte = 0;
@@ -39,11 +39,11 @@ int BitWriter(int fd, const vector<string> &codes, const vector<int> &data)
 
     for (size_t i = 0; i < data.size(); i++)
     {
-        const string &code = codes[data[i]];
-        for (char ch : code)
+        const auto &code = codes[data[i]];
+        for (bool bit : code)
         {
             // Pack bits MSB-first: shift left and OR in the new bit
-            buffer.byte = static_cast<unsigned char>((buffer.byte << 1) | (ch - '0'));
+            buffer.byte = static_cast<unsigned char>((buffer.byte << 1) | (bit ? 1 : 0));
             buffer.bitCount++;
 
             if (buffer.bitCount == 8)

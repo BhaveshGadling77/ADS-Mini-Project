@@ -12,7 +12,7 @@
 #include "../image/bmp_reader.h"
 #include "data_preprocessor.h"
 #include "frequency.h"
-#include "huffman.h"
+#include "algorithms/huffman/HuffmanCodec.hpp"
 #include "../format/file_header.h"
 #include "bit_writer.h"
 #include "spatial_predictor.h"
@@ -88,14 +88,22 @@ void compressImage(
     }
 
     // 4. Generate Huffman codes
-    vector<string> codes(256, "");
-    huffmanEncoding(freq, codes);
+    adsc::HuffmanCodec::Frequencies huffmanFrequencies{};
+    for (const auto &entry : freq)
+    {
+        huffmanFrequencies[entry.first] = static_cast<uint64_t>(entry.second);
+    }
+    const auto huffmanTree = adsc::HuffmanCodec::buildTree(huffmanFrequencies);
+    const auto codes = adsc::HuffmanCodec::buildCodeTable(huffmanTree);
 
     cout << "\nHuffman Codes:\n";
 
     for (const auto &p : freq)
     {
-        cout << p.first << " -> " << codes[p.first] << "\n";
+        cout << p.first << " -> ";
+        for (bool bit : codes[p.first])
+            cout << (bit ? '1' : '0');
+        cout << "\n";
     }
 
     // 5. Prepare compressed file header

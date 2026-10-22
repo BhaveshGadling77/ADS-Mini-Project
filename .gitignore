@@ -216,21 +216,23 @@ dist
 
 .vscode/
 compression-core/build/
+compression-core/modules/video/videoCompress
+compression-core/modules/video/videoDecompress
 server/dist/
 server/storage/jobs/*
 !server/storage/jobs/.gitkeep
 web/dist/
-# Allow handwritten Makefile in image_compression
-!image_compression/Makefile
+# Allow handwritten Makefile in the image module
+!compression-core/modules/image/Makefile
 
 # Image compression module build & test outputs
-image_compression/compressor
-image_compression/compare_images
-image_compression/output/compressed/*
-!image_compression/output/compressed/.gitkeep
-image_compression/output/decompressed/*
-!image_compression/output/decompressed/.gitkeep
-image_compression/output/*.bin
-image_compression/results/logs/*
-!image_compression/results/logs/.gitkeep
-image_compression/results/*.csv
+compression-core/modules/image/compressor
+compression-core/modules/image/compare_images
+compression-core/modules/image/output/compressed/*
+!compression-core/modules/image/output/compressed/.gitkeep
+compression-core/modules/image/output/decompressed/*
+!compression-core/modules/image/output/decompressed/.gitkeep
+compression-core/modules/image/output/*.bin
+compression-core/modules/image/results/logs/*
+!compression-core/modules/image/results/logs/.gitkeep
+compression-core/modules/image/results/*.csv

@@ -20,6 +20,8 @@
 
 ## 2. Static Huffman Coding
 
+Text and the standalone BMP module use the shared implementation in `compression-core/include/algorithms/huffman/HuffmanCodec.hpp` for Huffman tree construction and code-table generation. Their containers and bitstream I/O remain separate.
+
 ### Underlying Data Structures: Custom Min-Heap & Binary Tree
 - **Pass 1 — Frequency Analysis:** Computes frequency counts for all 256 byte values in the input.
 - **Pass 2 — Priority Queue Construction (`MinHeap`):**

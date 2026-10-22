@@ -12,7 +12,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
-COPY compression-core/ ./compression-core/
+COPY compression-core/CMakeLists.txt ./compression-core/CMakeLists.txt
+COPY compression-core/include/ ./compression-core/include/
+COPY compression-core/src/ ./compression-core/src/
+COPY compression-core/cli/ ./compression-core/cli/
+COPY compression-core/tests/ ./compression-core/tests/
 
 WORKDIR /workspace/compression-core/build
 RUN cmake -DCMAKE_BUILD_TYPE=Release .. && \

@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -g
+CXXFLAGS = -std=c++17 -Wall -Wextra -g -I../../include
 TARGET = compressor
 
 SOURCES = \
@@ -7,7 +7,6 @@ SOURCES = \
 	image/bmp_reader.cpp \
 	compression/data_preprocessor.cpp \
 	compression/frequency.cpp \
-	compression/huffman.cpp \
 	compression/spatial_predictor.cpp \
 	format/file_header.cpp \
 	compression/bit_writer.cpp \
@@ -23,7 +22,6 @@ LIB_SOURCES = \
 	image/bmp_reader.cpp \
 	compression/data_preprocessor.cpp \
 	compression/frequency.cpp \
-	compression/huffman.cpp \
 	compression/spatial_predictor.cpp \
 	format/file_header.cpp \
 	compression/bit_writer.cpp \

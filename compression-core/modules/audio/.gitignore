@@ -1,6 +1,8 @@
 # Compiled executables
 audioCompression.exe
 audioDecompression.exe
+audioCompression
+audioDecompression
 
 # Temporary PCM audio files
 audio_temp_pcm.pcm

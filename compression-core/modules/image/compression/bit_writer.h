@@ -1,7 +1,8 @@
 #ifndef BIT_WRITER_H
 #define BIT_WRITER_H
 
-#include <string>
+#include "algorithms/huffman/HuffmanCodec.hpp"
+
 #include <vector>
 
 struct Buffer {
@@ -12,6 +13,6 @@ struct Buffer {
 // Writes Huffman-encoded bits for each symbol in data.
 // Returns the number of valid bits in the last byte (1-8), or 0 if no bits were written.
 // Does NOT close fd — caller retains ownership.
-int BitWriter(int fd, const std::vector<std::string> &codes, const std::vector<int> &data);
+int BitWriter(int fd, const adsc::HuffmanCodec::CodeTable &codes, const std::vector<int> &data);
 
 #endif

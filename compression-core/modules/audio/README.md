@@ -4,6 +4,8 @@
 
 This module is part of the **Advanced Data Structures Mini Project**. It implements lossless Huffman compression and decompression for audio data using C++.
 
+The web GUI accepts MP3 files and invokes these binaries through the API. Its `.huf` archive contains Huffman-coded PCM; restored MP3 output is re-encoded and may differ from the original MP3.
+
 Since MP3 files are already compressed using a lossy audio compression algorithm, the input MP3 is first decoded into raw PCM audio using FFmpeg. Our Huffman algorithm then compresses the PCM data into a custom binary `.huf` file.
 
 During decompression, the original PCM data is reconstructed and encoded back into MP3 format using FFmpeg.
@@ -30,7 +32,7 @@ During decompression, the original PCM data is reconstructed and encoded back in
 ## Project Structure
 
 ```text
-audio_compression_decompression/
+compression-core/modules/audio/
 ├── audioCompression.cpp
 ├── audioDecompression.cpp
 ├── README.md
@@ -97,14 +99,14 @@ The FFmpeg build must support MP3 decoding and the `libmp3lame` encoder.
 
 ## Compilation
 
-Open a terminal in the project directory and run:
+Open a terminal in `compression-core/modules/audio/` and run:
 
 ```bash
-g++ audioCompression.cpp -o audioCompression.exe
-g++ audioDecompression.cpp -o audioDecompression.exe
+g++ audioCompression.cpp -o audioCompression
+g++ audioDecompression.cpp -o audioDecompression
 ```
 
-These commands work in a Windows environment with GCC installed. On Linux, use executable names without `.exe`.
+On Windows, append `.exe` to the output names if needed.
 
 ## Usage
 

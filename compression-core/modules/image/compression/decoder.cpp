@@ -4,7 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdexcept>
-#include "huffman.h"
+#include "algorithms/huffman/HuffmanCodec.hpp"
 #include "bit_reader.h"
 #include <iostream>
 #include "../image/bmp_writer.h"
@@ -29,20 +29,6 @@ public:
 
 private:
     int fd_;
-};
-
-// RAII wrapper for Huffman trees
-class TreeGuard
-{
-public:
-    explicit TreeGuard(HuffmanNode *root) : root_(root) {}
-    ~TreeGuard() { destroyTree(root_); }
-    TreeGuard(const TreeGuard &) = delete;
-    TreeGuard &operator=(const TreeGuard &) = delete;
-    HuffmanNode *get() const { return root_; }
-
-private:
-    HuffmanNode *root_;
 };
 
 void decompressImage(
@@ -82,9 +68,13 @@ void decompressImage(
         return;
     }
 
-    // 5. Reconstruct Huffman tree
-    HuffmanNode *huffmanTree = buildHuffmanTree(freq);
-    TreeGuard treeGuard(huffmanTree);
+    // 5. Reconstruct the shared Huffman tree used by the text codec as well.
+    adsc::HuffmanCodec::Frequencies huffmanFrequencies{};
+    for (const auto &entry : freq)
+    {
+        huffmanFrequencies[entry.first] = static_cast<uint64_t>(entry.second);
+    }
+    const auto huffmanTree = adsc::HuffmanCodec::buildTree(huffmanFrequencies);
 
     if (huffmanTree == nullptr)
     {
@@ -99,14 +89,13 @@ void decompressImage(
     // need to read the encoded bits. The encoder writes code "0" for each symbol.
     bool isSingleSymbol = (huffmanTree->left != nullptr &&
                            huffmanTree->right == nullptr &&
-                           huffmanTree->left->left == nullptr &&
-                           huffmanTree->left->right == nullptr);
+                           huffmanTree->left->isLeaf());
 
     ReadBuffer readBuffer{0, 0, 8};
 
     if (isSingleSymbol)
     {
-        unsigned char symbol = static_cast<unsigned char>(huffmanTree->left->data);
+        unsigned char symbol = huffmanTree->left->byteValue;
         // Each symbol was encoded as a single "0" bit.
         // We need to read the correct number of bits to consume the stream,
         // but we already know every decoded symbol is the same.
@@ -123,7 +112,7 @@ void decompressImage(
     }
     else
     {
-        HuffmanNode *currentNode = huffmanTree;
+        auto currentNode = huffmanTree;
 
         while (decodedData.size() < expectedSize)
         {
@@ -148,7 +137,7 @@ void decompressImage(
 
             if (currentNode->left == nullptr && currentNode->right == nullptr)
             {
-                decodedData.push_back(static_cast<unsigned char>(currentNode->data));
+                decodedData.push_back(currentNode->byteValue);
                 currentNode = huffmanTree; // Reset to root for next symbol
             }
         }

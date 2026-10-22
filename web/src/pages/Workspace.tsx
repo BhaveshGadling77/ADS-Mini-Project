@@ -18,8 +18,8 @@ import {
 
 const DEFAULT_ALGO_BY_MODALITY: Record<ModalityType, AlgorithmType> = {
   text: 'lzw',
-  image: 'image_quadtree',
-  audio: 'audio_wavelet',
+  image: 'image_huffman',
+  audio: 'audio_huffman',
   video: 'video_interframe',
 };
 
@@ -31,6 +31,8 @@ export const Workspace: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<JobRecord | null>(null);
+  const [videoWidth, setVideoWidth] = useState('640');
+  const [videoHeight, setVideoHeight] = useState('480');
 
   const handleModeChange = (newMode: 'compress' | 'decompress') => {
     setMode(newMode);
@@ -56,10 +58,13 @@ export const Workspace: React.FC = () => {
 
     try {
       if (mode === 'compress') {
-        const job = await compressFile(selectedFile, selectedAlgorithm, modality);
+        const dimensions = modality === 'video'
+          ? { width: Number(videoWidth), height: Number(videoHeight) }
+          : undefined;
+        const job = await compressFile(selectedFile, selectedAlgorithm, modality, dimensions);
         setResult(job);
       } else {
-        const job = await decompressFile(selectedFile, selectedAlgorithm);
+        const job = await decompressFile(selectedFile, selectedAlgorithm, modality);
         setResult(job);
       }
     } catch (err: any) {
@@ -174,7 +179,7 @@ export const Workspace: React.FC = () => {
         {/* File Dropzone */}
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-            {mode === 'compress' ? `Select Your ${modality.toUpperCase()} File` : 'Select Your Compressed (.adsc) File'}
+            {mode === 'compress' ? `Select Your ${modality.toUpperCase()} File` : `Select Compressed ${modality.toUpperCase()} Archive`}
           </label>
           <FileDropzone
             selectedFile={selectedFile}
@@ -187,6 +192,18 @@ export const Workspace: React.FC = () => {
             modality={modality}
           />
         </div>
+
+        {mode === 'compress' && modality === 'video' && (
+          <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
+            <label className="text-xs text-slate-400">YUV420 width
+              <input type="number" min="2" step="2" value={videoWidth} onChange={e => setVideoWidth(e.target.value)} className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-100" />
+            </label>
+            <label className="text-xs text-slate-400">YUV420 height
+              <input type="number" min="2" step="2" value={videoHeight} onChange={e => setVideoHeight(e.target.value)} className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-100" />
+            </label>
+            <p className="col-span-2 text-xs text-slate-500">Video prototype accepts raw YUV420 (.yuv) files. Compression is lossy.</p>
+          </div>
+        )}
 
         {/* Algorithm Selector */}
         {mode === 'compress' && (
