@@ -8,67 +8,6 @@ namespace adsc {
 
 HuffmanCompressor::HuffmanCompressor() = default;
 
-std::shared_ptr<HuffmanNode> HuffmanCompressor::buildTree(const std::vector<uint64_t>& frequencies) {
-    MinHeap<std::shared_ptr<HuffmanNode>, HuffmanNodeCompare> heap;
-
-    for (int i = 0; i < 256; ++i) {
-        if (frequencies[i] > 0) {
-            heap.push(std::make_shared<HuffmanNode>(static_cast<uint8_t>(i), frequencies[i]));
-        }
-    }
-
-    if (heap.empty()) {
-        return nullptr;
-    }
-
-    if (heap.size() == 1) {
-        auto singleNode = heap.top();
-        heap.pop();
-        auto parent = std::make_shared<HuffmanNode>(singleNode->frequency, singleNode, nullptr);
-        return parent;
-    }
-
-    while (heap.size() > 1) {
-        auto left = heap.top();
-        heap.pop();
-        auto right = heap.top();
-        heap.pop();
-
-        auto parent = std::make_shared<HuffmanNode>(left->frequency + right->frequency, left, right);
-        heap.push(parent);
-    }
-
-    return heap.top();
-}
-
-void HuffmanCompressor::generateCodes(
-    const std::shared_ptr<HuffmanNode>& node,
-    std::vector<bool>& currentBits,
-    std::vector<Code>& table) {
-    if (!node) return;
-
-    if (node->isLeaf()) {
-        if (currentBits.empty()) {
-            table[node->byteValue] = Code{{false}};
-        } else {
-            table[node->byteValue] = Code{currentBits};
-        }
-        return;
-    }
-
-    if (node->left) {
-        currentBits.push_back(false);
-        generateCodes(node->left, currentBits, table);
-        currentBits.pop_back();
-    }
-
-    if (node->right) {
-        currentBits.push_back(true);
-        generateCodes(node->right, currentBits, table);
-        currentBits.pop_back();
-    }
-}
-
 CompressionMetrics HuffmanCompressor::compress(std::istream& in, std::ostream& out) {
     auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -85,7 +24,7 @@ CompressionMetrics HuffmanCompressor::compress(std::istream& in, std::ostream& o
     header.write(out);
 
     if (originalSize > 0) {
-        std::vector<uint64_t> frequencies(256, 0);
+        HuffmanCodec::Frequencies frequencies{};
         for (uint8_t b : inputData) {
             frequencies[b]++;
         }
@@ -110,14 +49,12 @@ CompressionMetrics HuffmanCompressor::compress(std::istream& in, std::ostream& o
             }
         }
 
-        auto root = buildTree(frequencies);
-        std::vector<Code> table(256);
-        std::vector<bool> currentBits;
-        generateCodes(root, currentBits, table);
+        auto root = HuffmanCodec::buildTree(frequencies);
+        auto table = HuffmanCodec::buildCodeTable(root);
 
         BitWriter writer(out);
         for (uint8_t b : inputData) {
-            const auto& bits = table[b].bits;
+            const auto& bits = table[b];
             for (bool bit : bits) {
                 writer.writeBit(bit);
             }
@@ -154,7 +91,7 @@ void HuffmanCompressor::decompress(std::istream& in, std::ostream& out, uint64_t
     }
     uint16_t nonZeroCount = static_cast<uint8_t>(b1) | (static_cast<uint16_t>(static_cast<uint8_t>(b2)) << 8);
 
-    std::vector<uint64_t> frequencies(256, 0);
+    HuffmanCodec::Frequencies frequencies{};
     for (uint16_t i = 0; i < nonZeroCount; ++i) {
         char symbolChar;
         if (!in.get(symbolChar)) {
@@ -173,7 +110,7 @@ void HuffmanCompressor::decompress(std::istream& in, std::ostream& out, uint64_t
         frequencies[symbol] = freq32;
     }
 
-    auto root = buildTree(frequencies);
+    auto root = HuffmanCodec::buildTree(frequencies);
     if (!root) {
         throw std::runtime_error("Failed to construct Huffman tree");
     }

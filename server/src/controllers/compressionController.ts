@@ -5,6 +5,7 @@ import fs from 'fs/promises';
 import { pipeline } from 'stream/promises';
 import { StorageService } from '../services/storageService.js';
 import { CompressionEngineService } from '../services/compressionEngineService.js';
+import { ModalityCompressionService } from '../services/modalityCompressionService.js';
 import { AlgorithmType, JobRecord, ModalityType, ComparisonItem } from '../types/index.js';
 import { config } from '../config/index.js';
 
@@ -19,11 +20,13 @@ export class CompressionController {
     let modality: ModalityType = 'text';
     let inputPath = '';
     let fileReceived = false;
+    let videoWidth = 0;
+    let videoHeight = 0;
 
     for await (const part of parts) {
       if (part.type === 'file') {
-        fileName = part.filename || 'file.txt';
-        const inputFileName = `input_${fileName}`;
+        fileName = path.basename(part.filename || 'file.txt');
+        const inputFileName = `input${path.extname(fileName) || '.bin'}`;
         inputPath = path.join(jobDir, inputFileName);
 
         await pipeline(part.file, createWriteStream(inputPath));
@@ -41,6 +44,10 @@ export class CompressionController {
           algorithm = (part.value as string).toLowerCase() as AlgorithmType;
         } else if (part.fieldname === 'modality' && part.value) {
           modality = (part.value as string).toLowerCase() as ModalityType;
+        } else if (part.fieldname === 'videoWidth') {
+          videoWidth = Number(part.value);
+        } else if (part.fieldname === 'videoHeight') {
+          videoHeight = Number(part.value);
         }
       }
     }
@@ -49,11 +56,15 @@ export class CompressionController {
       return reply.status(400).send({ error: 'No file uploaded' });
     }
 
-    const outputFileName = `${fileName}.adsc`;
+    const outputExtension = { text: '.adsc', image: '.huf2', audio: '.huf', video: '.cmp' }[modality];
+    const outputFileName = `${path.basename(fileName, path.extname(fileName))}${outputExtension}`;
     const outputPath = path.join(jobDir, outputFileName);
 
     try {
-      const metrics = await CompressionEngineService.compress(inputPath, outputPath, algorithm, modality);
+      const metrics = modality === 'text'
+        ? await CompressionEngineService.compress(inputPath, outputPath, algorithm, modality)
+        : await ModalityCompressionService.run('compress', modality, inputPath, outputPath, algorithm,
+          modality === 'video' ? { width: videoWidth, height: videoHeight } : undefined);
 
       const jobRecord: JobRecord = {
         jobId,
@@ -86,13 +97,14 @@ export class CompressionController {
 
     let fileName = 'compressed.adsc';
     let algorithm: AlgorithmType | undefined = undefined;
+    let modality: ModalityType = 'text';
     let inputPath = '';
     let fileReceived = false;
 
     for await (const part of parts) {
       if (part.type === 'file') {
-        fileName = part.filename || 'compressed.adsc';
-        const inputFileName = `input_${fileName}`;
+        fileName = path.basename(part.filename || 'compressed.adsc');
+        const inputFileName = `input${path.extname(fileName) || '.bin'}`;
         inputPath = path.join(jobDir, inputFileName);
 
         await pipeline(part.file, createWriteStream(inputPath));
@@ -107,6 +119,8 @@ export class CompressionController {
         fileReceived = true;
       } else if (part.fieldname === 'algorithm' && part.value) {
         algorithm = (part.value as string).toLowerCase() as AlgorithmType;
+      } else if (part.fieldname === 'modality' && part.value) {
+        modality = (part.value as string).toLowerCase() as ModalityType;
       }
     }
 
@@ -114,21 +128,28 @@ export class CompressionController {
       return reply.status(400).send({ error: 'No file uploaded' });
     }
 
-    let outputFileName = fileName.endsWith('.adsc')
-      ? fileName.slice(0, -5)
-      : `restored_${fileName}.txt`;
+    const extensions: Record<ModalityType, string> = { text: '.adsc', image: '.huf2', audio: '.huf', video: '.cmp' };
+    const restoredExtensions: Record<ModalityType, string> = { text: '.txt', image: '.bmp', audio: '.mp3', video: '.yuv' };
+    const compressedExtension = extensions[modality];
+    if (!fileName.toLowerCase().endsWith(compressedExtension)) {
+      return reply.status(400).send({ error: `Expected a ${compressedExtension} ${modality} archive` });
+    }
+    let outputFileName = `${path.basename(fileName, compressedExtension)}${restoredExtensions[modality]}`;
 
     const outputPath = path.join(jobDir, outputFileName);
 
     try {
-      const metrics = await CompressionEngineService.decompress(inputPath, outputPath, algorithm);
+      algorithm = algorithm || ({ text: undefined, image: 'image_huffman', audio: 'audio_huffman', video: 'video_interframe' } as const)[modality];
+      const metrics = modality === 'text'
+        ? await CompressionEngineService.decompress(inputPath, outputPath, algorithm)
+        : await ModalityCompressionService.run('decompress', modality, inputPath, outputPath, algorithm!);
 
       const jobRecord: JobRecord = {
         jobId,
         createdAt: new Date().toISOString(),
         operation: 'decompress',
         algorithm: metrics.algorithm,
-        modality: 'text',
+        modality,
         originalFileName: fileName,
         outputFileName,
         inputPath,

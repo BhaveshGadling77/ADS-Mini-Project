@@ -14,12 +14,17 @@ export async function checkServerHealth(): Promise<boolean> {
 export async function compressFile(
   file: File,
   algorithm: AlgorithmType = 'lzw',
-  modality = 'text'
+  modality = 'text',
+  videoDimensions?: { width: number; height: number }
 ): Promise<JobRecord> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('algorithm', algorithm);
   formData.append('modality', modality);
+  if (videoDimensions) {
+    formData.append('videoWidth', String(videoDimensions.width));
+    formData.append('videoHeight', String(videoDimensions.height));
+  }
 
   const res = await fetch(`${API_BASE}/api/compress`, {
     method: 'POST',
@@ -36,13 +41,15 @@ export async function compressFile(
 
 export async function decompressFile(
   file: File,
-  algorithm?: AlgorithmType
+  algorithm?: AlgorithmType,
+  modality = 'text'
 ): Promise<JobRecord> {
   const formData = new FormData();
   formData.append('file', file);
   if (algorithm) {
     formData.append('algorithm', algorithm);
   }
+  formData.append('modality', modality);
 
   const res = await fetch(`${API_BASE}/api/decompress`, {
     method: 'POST',

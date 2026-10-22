@@ -109,10 +109,14 @@ export const CompressionStats: React.FC<CompressionStatsProps> = ({ job }) => {
                 <span>Data Integrity</span>
               </div>
               <div className="text-xl sm:text-2xl font-bold font-mono text-teal-400">
-                100% Lossless
+                {job.modality === 'video' ? 'Lossy prototype' : job.modality === 'audio' ? 'PCM Huffman lossless' : 'Lossless codec'}
               </div>
               <div className="text-[11px] font-mono text-slate-500 mt-0.5">
-                Exact match verified
+                {job.modality === 'video'
+                  ? 'Reconstructed YUV may differ from input'
+                  : job.modality === 'audio'
+                    ? 'MP3 output is re-encoded from decoded PCM'
+                    : 'Original data is reconstructed exactly'}
               </div>
             </div>
 

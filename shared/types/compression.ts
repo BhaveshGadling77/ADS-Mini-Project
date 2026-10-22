@@ -4,14 +4,8 @@ export type AlgorithmType =
   | 'huffman'
   | 'bwt'
   // Image (Jibran)
-  | 'image_quadtree'
-  | 'image_quantization'
-  | 'image_wavelet'
-  // Audio (Parth)
-  | 'audio_wavelet'
-  | 'audio_delta_rle'
-  | 'audio_lpc'
-  // Video (Sangram)
+  | 'image_huffman'
+  | 'audio_huffman'
   | 'video_interframe'
   | 'video_octree';
 

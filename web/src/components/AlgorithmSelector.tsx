@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlgorithmType, ModalityType } from '../types/compression';
-import { Network, Binary, Shuffle, Image, Music, Video, Grid, Layers } from 'lucide-react';
+import { Network, Binary, Shuffle, Music, Video, Layers } from 'lucide-react';
 
 interface AlgorithmSelectorProps {
   modality: ModalityType;
@@ -57,60 +57,24 @@ export const AlgorithmSelector: React.FC<AlgorithmSelectorProps> = ({
     ],
     image: [
       {
-        id: 'image_quadtree',
-        title: 'Spatial Quadtree',
-        tagline: 'Recursive 2D Decomposition',
-        dataStructure: 'Quadtree',
+        id: 'image_huffman',
+        title: 'Huffman Image Coding',
+        tagline: 'Lossless coding of BMP pixel bytes',
+        dataStructure: 'Min-Heap + Binary Tree',
         assignee: 'Jibran',
-        status: 'in_dev',
-        icon: <Grid className="w-5 h-5 text-amber-400" />,
-      },
-      {
-        id: 'image_quantization',
-        title: 'Color Quantization',
-        tagline: 'Spatial RGB Palette Cluster',
-        dataStructure: 'KD-Tree',
-        assignee: 'Jibran',
-        status: 'in_dev',
-        icon: <Image className="w-5 h-5 text-orange-400" />,
-      },
-      {
-        id: 'image_wavelet',
-        title: '2D Haar Wavelets',
-        tagline: 'Multi-resolution Transform',
-        dataStructure: 'Wavelet Matrix',
-        assignee: 'Jibran',
-        status: 'in_dev',
+        status: 'active',
         icon: <Layers className="w-5 h-5 text-yellow-400" />,
       },
     ],
     audio: [
       {
-        id: 'audio_wavelet',
-        title: '1D Wavelet Tree',
-        tagline: 'Temporal Frequency Split',
-        dataStructure: 'Wavelet Tree',
+        id: 'audio_huffman',
+        title: 'Huffman Audio Coding',
+        tagline: 'Lossless coding of decoded MP3 PCM',
+        dataStructure: 'Min-Heap + Binary Tree',
         assignee: 'Parth',
-        status: 'in_dev',
+        status: 'active',
         icon: <Music className="w-5 h-5 text-violet-400" />,
-      },
-      {
-        id: 'audio_delta_rle',
-        title: 'Delta + RLE',
-        tagline: 'Differential Sample Coding',
-        dataStructure: 'Delta Run-Length',
-        assignee: 'Parth',
-        status: 'in_dev',
-        icon: <Shuffle className="w-5 h-5 text-purple-400" />,
-      },
-      {
-        id: 'audio_lpc',
-        title: 'LPC + Huffman',
-        tagline: 'Linear Predictive Coding',
-        dataStructure: 'Predictor + Heap',
-        assignee: 'Parth',
-        status: 'in_dev',
-        icon: <Binary className="w-5 h-5 text-fuchsia-400" />,
       },
     ],
     video: [
@@ -120,17 +84,8 @@ export const AlgorithmSelector: React.FC<AlgorithmSelectorProps> = ({
         tagline: 'Motion Delta Block Quadtree',
         dataStructure: 'Quadtree',
         assignee: 'Sangram',
-        status: 'in_dev',
+        status: 'active',
         icon: <Video className="w-5 h-5 text-rose-400" />,
-      },
-      {
-        id: 'video_octree',
-        title: '3D Octree',
-        tagline: 'Spatio-Temporal Volume',
-        dataStructure: '3D Octree',
-        assignee: 'Sangram',
-        status: 'in_dev',
-        icon: <Grid className="w-5 h-5 text-pink-400" />,
       },
     ],
   };
@@ -144,7 +99,7 @@ export const AlgorithmSelector: React.FC<AlgorithmSelectorProps> = ({
           Available Algorithms ({modality.toUpperCase()})
         </label>
         <span className="text-[11px] font-mono text-slate-500">
-          {modality === 'text' ? 'Implemented by Bhavesh' : `Teammate Module (${options[0]?.assignee})`}
+          {options.some(option => option.status === 'active') ? 'Available in this project build' : 'Prototype'}
         </span>
       </div>
 
