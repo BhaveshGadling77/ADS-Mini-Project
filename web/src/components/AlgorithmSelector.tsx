@@ -70,7 +70,7 @@ export const AlgorithmSelector: React.FC<AlgorithmSelectorProps> = ({
       {
         id: 'audio_huffman',
         title: 'Huffman Audio Coding',
-        tagline: 'Lossless coding of decoded MP3 PCM',
+        tagline: 'Huffman coding for MP3 or raw PCM (s16le, 44.1 kHz, stereo default)',
         dataStructure: 'Min-Heap + Binary Tree',
         assignee: 'Parth',
         status: 'active',

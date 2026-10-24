@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { UploadCloud, FileText, X, CheckCircle2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { UploadCloud, FileText, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { ModalityType } from '../types/compression';
 
 interface FileDropzoneProps {
@@ -20,14 +20,14 @@ function formatBytes(bytes: number): string {
 const MODALITY_ACCEPT: Record<ModalityType, string> = {
   text: '.txt,.md,.json,.csv,.c,.cpp,.h,.hpp,.py,.js,.ts,.html,.xml,.log',
   image: '.bmp',
-  audio: '.mp3',
+  audio: '.mp3,.pcm',
   video: '.yuv',
 };
 
 const MODALITY_HINT: Record<ModalityType, string> = {
   text: 'Supports .txt, .md, code, data files (up to 1 GB)',
   image: '24-bit uncompressed BMP only · produces a lossless .huf2 archive',
-  audio: 'MP3 input · Huffman-codes decoded PCM into a .huf archive',
+  audio: 'MP3 or raw PCM · PCM default: signed 16-bit little-endian, 44.1 kHz, stereo',
   video: 'Raw YUV420 (.yuv) only · lossy prototype · requires dimensions',
 };
 
@@ -42,7 +42,26 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
   modality = 'text',
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => setSelectionError(null), [mode, modality]);
+
+  const acceptFile = (file: File) => {
+    const extension = `.${file.name.split('.').pop()?.toLowerCase() || ''}`;
+    const allowed = mode === 'compress'
+      ? MODALITY_ACCEPT[modality].split(',')
+      : [MODALITY_ARCHIVE[modality]];
+    if (!allowed.includes(extension)) {
+      setSelectionError(mode === 'compress'
+        ? `Choose a supported ${modality} file: ${MODALITY_ACCEPT[modality].split(',').join(', ')}.`
+        : `Choose a ${MODALITY_ARCHIVE[modality]} ${modality} archive.`);
+      onFileSelect(null);
+      return;
+    }
+    setSelectionError(null);
+    onFileSelect(file);
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -57,13 +76,14 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onFileSelect(e.dataTransfer.files[0]);
+      acceptFile(e.dataTransfer.files[0]);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      onFileSelect(e.target.files[0]);
+      acceptFile(e.target.files[0]);
+      e.target.value = '';
     }
   };
 
@@ -74,6 +94,12 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
 
   return (
     <div className="w-full">
+      {selectionError && (
+        <div role="alert" className="mb-3 flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{selectionError}</span>
+        </div>
+      )}
       <input
         ref={inputRef}
         type="file"

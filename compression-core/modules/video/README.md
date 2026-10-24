@@ -15,4 +15,4 @@ g++ -std=c++17 compression-core/modules/video/standalone/videoDecompress.cpp \
   $(pkg-config --cflags --libs opencv4) -o compression-core/modules/video/videoDecompress
 ```
 
-The generated binaries are ignored by Git. The current video prototype is not built by `scripts/build.sh` because OpenCV is an optional system dependency.
+The generated binaries are ignored by Git. `scripts/build.sh` builds the video prototype when OpenCV 4 development files and `pkg-config` are installed; otherwise it stops with an installation hint. Install `libopencv-dev` and `pkg-config`, then rerun the build script.

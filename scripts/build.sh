@@ -20,6 +20,10 @@ g++ -std=c++17 -Wall -Wextra audioCompression.cpp -o audioCompression
 g++ -std=c++17 -Wall -Wextra audioDecompression.cpp -o audioDecompression
 
 echo "[4/6] Building standalone video module (OpenCV 4 required)..."
+if ! pkg-config --exists opencv4; then
+  echo "OpenCV 4 development files were not found. Install libopencv-dev and pkg-config, then rerun ./scripts/build.sh." >&2
+  exit 1
+fi
 g++ -std=c++17 "$ROOT_DIR/compression-core/modules/video/standalone/videoCompress.cpp" $(pkg-config --cflags opencv4) -lopencv_imgproc -lopencv_core -o "$ROOT_DIR/compression-core/modules/video/videoCompress"
 g++ -std=c++17 "$ROOT_DIR/compression-core/modules/video/standalone/videoDecompress.cpp" $(pkg-config --cflags opencv4) -lopencv_imgproc -lopencv_core -o "$ROOT_DIR/compression-core/modules/video/videoDecompress"
 

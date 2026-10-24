@@ -6,9 +6,9 @@ This module is part of the **Advanced Data Structures Mini Project**. It impleme
 
 The web GUI accepts MP3 files and invokes these binaries through the API. Its `.huf` archive contains Huffman-coded PCM; restored MP3 output is re-encoded and may differ from the original MP3.
 
-Since MP3 files are already compressed using a lossy audio compression algorithm, the input MP3 is first decoded into raw PCM audio using FFmpeg. Our Huffman algorithm then compresses the PCM data into a custom binary `.huf` file.
+MP3 input is decoded into raw PCM using FFmpeg before Huffman coding. Raw `.pcm` input is Huffman-coded directly and is assumed to be signed 16-bit little-endian, 44.1 kHz, stereo. Both paths create a custom binary `.huf` file.
 
-During decompression, the original PCM data is reconstructed and encoded back into MP3 format using FFmpeg.
+During decompression, the PCM bytes are reconstructed and encoded to MP3 using FFmpeg. The PCM Huffman round trip is byte-preserving; MP3 output is lossy.
 
 ## Features
 

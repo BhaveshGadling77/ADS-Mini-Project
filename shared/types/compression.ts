@@ -16,6 +16,7 @@ export interface CompressionMetrics {
   algorithm: string;
   modality?: string;
   originalSizeBytes: number;
+  algorithmInputSizeBytes?: number;
   compressedSizeBytes: number;
   compressionRatio: number;
   spaceSavedPercent: number;

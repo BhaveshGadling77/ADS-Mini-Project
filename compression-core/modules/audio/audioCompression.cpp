@@ -1,5 +1,6 @@
 
 #include <algorithm>
+#include <cctype>
 #include <array>
 #include <cstdint>
 #include <cstdlib>
@@ -206,18 +207,26 @@ bool compressPCM(const string& inputFile,
 }
 
 int main(int argc, char* argv[]) {
-    string mp3File = argc > 1 ? argv[1] : "sample.mp3";
+    string inputFile = argc > 1 ? argv[1] : "sample.mp3";
     string compressedFile =
         argc > 2 ? argv[2] : "compressed_audio.huf";
-    string pcmFile = "audio_temp_pcm.pcm";
+    string pcmFile = argc > 3 ? argv[3] : "audio_temp_pcm.pcm";
 
-    if (!runFFmpeg(mp3File, pcmFile)) {
-        cerr << "FFmpeg conversion failed. Check the MP3 path "
-             << "and FFmpeg installation.\n";
+    string extension = inputFile.substr(inputFile.find_last_of('.') == string::npos
+        ? inputFile.size() : inputFile.find_last_of('.'));
+    transform(extension.begin(), extension.end(), extension.begin(),
+        [](unsigned char c) { return static_cast<char>(tolower(c)); });
+
+    // Raw PCM has no header; the application's default interpretation is
+    // signed 16-bit little-endian, 44.1 kHz, stereo. Huffman codes its bytes
+    // directly, while the decompressor uses the same defaults for MP3 output.
+    if (extension != ".pcm" && !runFFmpeg(inputFile, pcmFile)) {
+        cerr << "FFmpeg could not decode the input. Use a valid MP3 or raw PCM file.\n";
         return 1;
     }
 
-    if (!compressPCM(pcmFile, compressedFile))
+    const string& pcmInput = extension == ".pcm" ? inputFile : pcmFile;
+    if (!compressPCM(pcmInput, compressedFile))
         return 1;
 
     cout << "Compressed audio saved to: "

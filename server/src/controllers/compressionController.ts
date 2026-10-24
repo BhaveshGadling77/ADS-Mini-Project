@@ -56,6 +56,47 @@ export class CompressionController {
       return reply.status(400).send({ error: 'No file uploaded' });
     }
 
+    // The browser's `accept` attribute is only a picker hint (drag-and-drop
+    // bypasses it), so enforce the formats supported by each prototype here.
+    const allowedInput: Record<ModalityType, { extensions: string[]; description: string }> = {
+      text: { extensions: [], description: '' },
+      image: { extensions: ['.bmp'], description: '24-bit uncompressed BMP image' },
+      audio: { extensions: ['.mp3', '.pcm'], description: 'MP3 or raw PCM audio' },
+      video: { extensions: ['.yuv'], description: 'raw YUV420 video' },
+    };
+    const expected = allowedInput[modality];
+    if (!expected) {
+      await fs.rm(jobDir, { recursive: true, force: true }).catch(() => {});
+      return reply.status(400).send({ error: `Unsupported modality: ${modality}` });
+    }
+    if (modality !== 'text' && !expected.extensions.includes(path.extname(fileName).toLowerCase())) {
+      await fs.rm(jobDir, { recursive: true, force: true }).catch(() => {});
+      const extensions = expected.extensions.join(' or ');
+      return reply.status(400).send({
+        error: `${modality[0].toUpperCase()}${modality.slice(1)} compression requires ${expected.description} (${extensions}) input.`,
+      });
+    }
+    if (modality === 'video') {
+      const frameBytes = videoWidth * videoHeight * 3 / 2;
+      const { size } = await fs.stat(inputPath);
+      if (!Number.isSafeInteger(frameBytes) || frameBytes <= 0 || size === 0 || size % frameBytes !== 0) {
+        await fs.rm(jobDir, { recursive: true, force: true }).catch(() => {});
+        return reply.status(400).send({
+          error: 'Video data size does not match the supplied YUV420 dimensions. Upload complete raw YUV420 frames and verify width and height.',
+        });
+      }
+    }
+    if (modality === 'audio' && path.extname(fileName).toLowerCase() === '.pcm') {
+      const { size } = await fs.stat(inputPath);
+      // Default PCM is signed 16-bit stereo: 2 bytes x 2 channels per frame.
+      if (size === 0 || size % 4 !== 0) {
+        await fs.rm(jobDir, { recursive: true, force: true }).catch(() => {});
+        return reply.status(400).send({
+          error: 'PCM input must contain complete signed 16-bit stereo frames (4 bytes per frame). Expected 44.1 kHz, little-endian PCM.',
+        });
+      }
+    }
+
     const outputExtension = { text: '.adsc', image: '.huf2', audio: '.huf', video: '.cmp' }[modality];
     const outputFileName = `${path.basename(fileName, path.extname(fileName))}${outputExtension}`;
     const outputPath = path.join(jobDir, outputFileName);

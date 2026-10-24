@@ -26,7 +26,7 @@ See [docs/PROJECT_GUIDE.md](docs/PROJECT_GUIDE.md) for the algorithms, data stru
 
 - **Text:** regular text files; output `.adsc`.
 - **Image:** 24-bit uncompressed BMP only; output `.huf2`; decompression restores BMP exactly.
-- **Audio:** MP3 input; output `.huf`. Huffman coding preserves decoded PCM, while the MP3 output is re-encoded and can differ from the original. FFmpeg with MP3 support is required.
+- **Audio:** MP3 or raw PCM input; output `.huf`. Raw PCM defaults to signed 16-bit little-endian, 44.1 kHz, stereo. Huffman coding preserves PCM bytes, while decompression outputs a re-encoded MP3 and can differ from the original. FFmpeg with MP3 support is required for MP3 input and output.
 - **Video:** raw YUV420 `.yuv` input; enter the original even width and height; output `.cmp`. The prototype is lossy and decompression restores raw `.yuv`.
 
 Choose the matching modality before decompressing so the GUI accepts the corresponding `.adsc`, `.huf2`, `.huf`, or `.cmp` archive.

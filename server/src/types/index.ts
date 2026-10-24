@@ -15,6 +15,8 @@ export interface CompressionMetrics {
   algorithm: string;
   modality?: string;
   originalSizeBytes: number;
+  /** Bytes passed to the compression algorithm (PCM for MP3 audio input). */
+  algorithmInputSizeBytes?: number;
   compressedSizeBytes: number;
   compressionRatio: number;
   spaceSavedPercent: number;
