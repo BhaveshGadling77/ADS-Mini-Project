@@ -18,6 +18,11 @@ function formatBytes(bytes: number): string {
 export const CompressionStats: React.FC<CompressionStatsProps> = ({ job }) => {
   const { metrics, operation, outputFileName, downloadUrl } = job;
   const isCompress = operation === 'compress';
+  const isAudioCompression = isCompress && job.modality === 'audio';
+  const algorithmInputSize = metrics.algorithmInputSizeBytes ?? metrics.originalSizeBytes;
+  const sourceSizeChange = metrics.originalSizeBytes > 0
+    ? ((metrics.compressedSizeBytes - metrics.originalSizeBytes) / metrics.originalSizeBytes) * 100
+    : 0;
 
   return (
     <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
@@ -50,7 +55,7 @@ export const CompressionStats: React.FC<CompressionStatsProps> = ({ job }) => {
         <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
           <div className="flex items-center space-x-2 text-slate-400 text-xs mb-1">
             <HardDrive className="w-3.5 h-3.5" />
-            <span>Original Size</span>
+            <span>{isAudioCompression ? 'Uploaded File Size' : 'Original Size'}</span>
           </div>
           <div className="text-xl sm:text-2xl font-bold font-mono text-slate-100">
             {formatBytes(metrics.originalSizeBytes)}
@@ -58,7 +63,27 @@ export const CompressionStats: React.FC<CompressionStatsProps> = ({ job }) => {
           <div className="text-[11px] font-mono text-slate-500 mt-0.5">
             {metrics.originalSizeBytes.toLocaleString()} bytes
           </div>
+          {isAudioCompression && (
+            <div className="text-[11px] font-mono text-slate-500 mt-1">
+              Archive is {Math.abs(sourceSizeChange).toFixed(1)}% {sourceSizeChange >= 0 ? 'larger' : 'smaller'} than upload
+            </div>
+          )}
         </div>
+
+        {isAudioCompression && (
+          <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
+            <div className="flex items-center space-x-2 text-slate-400 text-xs mb-1">
+              <HardDrive className="w-3.5 h-3.5 text-violet-400" />
+              <span>PCM Before Huffman</span>
+            </div>
+            <div className="text-xl sm:text-2xl font-bold font-mono text-slate-100">
+              {formatBytes(algorithmInputSize)}
+            </div>
+            <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+              {algorithmInputSize.toLocaleString()} bytes · codec comparison basis
+            </div>
+          </div>
+        )}
 
         <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
           <div className="flex items-center space-x-2 text-slate-400 text-xs mb-1">
@@ -84,7 +109,7 @@ export const CompressionStats: React.FC<CompressionStatsProps> = ({ job }) => {
                 {metrics.spaceSavedPercent.toFixed(1)}%
               </div>
               <div className="text-[11px] font-mono text-slate-500 mt-0.5">
-                Savings percentage
+                {isAudioCompression ? 'Compared with PCM input' : 'Savings percentage'}
               </div>
             </div>
 
@@ -97,7 +122,7 @@ export const CompressionStats: React.FC<CompressionStatsProps> = ({ job }) => {
                 {metrics.compressionRatio.toFixed(2)}:1
               </div>
               <div className="text-[11px] font-mono text-slate-500 mt-0.5">
-                Input : Output factor
+                {isAudioCompression ? 'PCM input : archive factor' : 'Input : Output factor'}
               </div>
             </div>
           </>
@@ -137,19 +162,19 @@ export const CompressionStats: React.FC<CompressionStatsProps> = ({ job }) => {
       </div>
 
       {/* Visual Size Bar for compression */}
-      {isCompress && metrics.originalSizeBytes > 0 && (
+      {isCompress && (isAudioCompression ? algorithmInputSize : metrics.originalSizeBytes) > 0 && (
         <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-800/60">
           <div className="flex justify-between text-xs text-slate-400 font-mono mb-2">
             <span>Size comparison</span>
             <span>
-              {metrics.compressedSizeBytes} bytes vs {metrics.originalSizeBytes} bytes
+              {metrics.compressedSizeBytes} bytes vs {isAudioCompression ? algorithmInputSize : metrics.originalSizeBytes} bytes
             </span>
           </div>
           <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden flex">
             <div
               className="bg-emerald-500 h-full rounded-full transition-all duration-500"
               style={{
-                width: `${Math.min(100, Math.max(5, (metrics.compressedSizeBytes / metrics.originalSizeBytes) * 100))}%`,
+                width: `${Math.min(100, Math.max(5, (metrics.compressedSizeBytes / (isAudioCompression ? algorithmInputSize : metrics.originalSizeBytes)) * 100))}%`,
               }}
             />
           </div>
