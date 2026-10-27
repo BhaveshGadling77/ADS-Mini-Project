@@ -19,6 +19,7 @@ export const CompressionStats: React.FC<CompressionStatsProps> = ({ job }) => {
   const { metrics, operation, outputFileName, downloadUrl } = job;
   const isCompress = operation === 'compress';
   const isAudioCompression = isCompress && job.modality === 'audio';
+  const isVideoCompression = isCompress && job.modality === 'video';
   const algorithmInputSize = metrics.algorithmInputSizeBytes ?? metrics.originalSizeBytes;
   const sourceSizeChange = metrics.originalSizeBytes > 0
     ? ((metrics.compressedSizeBytes - metrics.originalSizeBytes) / metrics.originalSizeBytes) * 100
@@ -49,6 +50,12 @@ export const CompressionStats: React.FC<CompressionStatsProps> = ({ job }) => {
           <span>Download {isCompress ? 'Compressed File' : 'Restored File'}</span>
         </button>
       </div>
+
+      {isVideoCompression && metrics.compressedSizeBytes > metrics.originalSizeBytes && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          This setting made the archive {sourceSizeChange.toFixed(1)}% larger. Recompress with a higher strength to trade more detail for a smaller file.
+        </div>
+      )}
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

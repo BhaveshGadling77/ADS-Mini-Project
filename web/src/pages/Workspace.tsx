@@ -31,8 +31,9 @@ export const Workspace: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<JobRecord | null>(null);
-  const [videoWidth, setVideoWidth] = useState('640');
-  const [videoHeight, setVideoHeight] = useState('480');
+  const [videoWidth, setVideoWidth] = useState('');
+  const [videoHeight, setVideoHeight] = useState('');
+  const [videoCompressionStrength, setVideoCompressionStrength] = useState(12);
 
   const handleModeChange = (newMode: 'compress' | 'decompress') => {
     setMode(newMode);
@@ -59,7 +60,11 @@ export const Workspace: React.FC = () => {
     try {
       if (mode === 'compress') {
         const dimensions = modality === 'video'
-          ? { width: Number(videoWidth), height: Number(videoHeight) }
+          ? {
+              width: Number(videoWidth),
+              height: Number(videoHeight),
+              compressionStrength: videoCompressionStrength,
+            }
           : undefined;
         const job = await compressFile(selectedFile, selectedAlgorithm, modality, dimensions);
         setResult(job);
@@ -187,6 +192,14 @@ export const Workspace: React.FC = () => {
               setSelectedFile(file);
               setResult(null);
               setError(null);
+              const dimensions = file.name.match(/(?:^|[_-])(\d{2,5})x(\d{2,5})(?=[_-]|$)/i);
+              if (dimensions) {
+                setVideoWidth(dimensions[1]);
+                setVideoHeight(dimensions[2]);
+              } else if (modality === 'video') {
+                setVideoWidth('');
+                setVideoHeight('');
+              }
             }}
             mode={mode}
             modality={modality}
@@ -201,7 +214,10 @@ export const Workspace: React.FC = () => {
             <label className="text-xs text-slate-400">YUV420 height
               <input type="number" min="2" step="2" value={videoHeight} onChange={e => setVideoHeight(e.target.value)} className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-slate-100" />
             </label>
-            <p className="col-span-2 text-xs text-slate-500">Video prototype accepts raw YUV420 (.yuv) files. Compression is lossy.</p>
+            <label className="col-span-2 text-xs text-slate-400">Compression strength: {videoCompressionStrength}
+              <input type="range" min="3" max="40" step="1" value={videoCompressionStrength} onChange={e => setVideoCompressionStrength(Number(e.target.value))} className="mt-2 w-full accent-emerald-500" />
+            </label>
+            <p className="col-span-2 text-xs text-slate-500">Raw YUV420 (.yuv) only. Dimensions are suggested from filenames such as `clip_176x144.yuv`; verify them against the source. Higher strength usually makes smaller files with more detail loss.</p>
           </div>
         )}
 

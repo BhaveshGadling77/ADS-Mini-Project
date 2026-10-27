@@ -12,7 +12,7 @@ export class ModalityCompressionService {
   static async run(
     operation: 'compress' | 'decompress', modality: ModalityType,
     inputPath: string, outputPath: string, algorithm: AlgorithmType,
-    dimensions?: { width: number; height: number }
+    dimensions?: { width: number; height: number; compressionStrength: number }
   ): Promise<CompressionMetrics> {
     const started = performance.now();
     let binary: string;
@@ -38,7 +38,10 @@ export class ModalityCompressionService {
             dimensions.width <= 0 || dimensions.height <= 0 || dimensions.width % 2 || dimensions.height % 2) {
           throw new Error('Video compression requires positive, even YUV420 width and height values.');
         }
-        args = [inputPath, outputPath, String(dimensions.width), String(dimensions.height)];
+        if (!Number.isInteger(dimensions.compressionStrength) || dimensions.compressionStrength < 3 || dimensions.compressionStrength > 40) {
+          throw new Error('Video compression strength must be an integer from 3 to 40.');
+        }
+        args = [inputPath, outputPath, String(dimensions.width), String(dimensions.height), String(dimensions.compressionStrength)];
       } else args = [inputPath, outputPath];
     } else {
       throw new Error(`Unsupported ${modality} algorithm: ${algorithm}`);

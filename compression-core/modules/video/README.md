@@ -2,7 +2,7 @@
 
 `standalone/` contains experimental video compression/decompression source files. The web API invokes these binaries for raw YUV420 `.yuv` uploads; the CMake engine has separate video stubs.
 
-The codec is lossy and requires even frame dimensions. The Docker application image builds and includes its binaries. See [the project guide](../../../docs/PROJECT_GUIDE.md#gui-file-formats) for GUI input details and the [team implementation guide](../../../docs/development/TEAM_IMPLEMENTATION_GUIDE.md) for integrated engine extension points.
+The codec is lossy and requires even frame dimensions. Compression strength ranges from 3 to 40: larger values average larger image blocks and usually reduce archive size while losing more detail. The GUI starts at 12 and reports when an archive grows, so raise the strength and retry. The Docker application image builds and includes its binaries. See [the project guide](../../../docs/PROJECT_GUIDE.md#gui-file-formats) for GUI input details and the [team implementation guide](../../../docs/development/TEAM_IMPLEMENTATION_GUIDE.md) for integrated engine extension points.
 
 ## Build the prototype programs
 

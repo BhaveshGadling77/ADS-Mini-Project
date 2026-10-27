@@ -22,6 +22,7 @@ export class CompressionController {
     let fileReceived = false;
     let videoWidth = 0;
     let videoHeight = 0;
+    let videoCompressionStrength = 12;
 
     for await (const part of parts) {
       if (part.type === 'file') {
@@ -48,6 +49,8 @@ export class CompressionController {
           videoWidth = Number(part.value);
         } else if (part.fieldname === 'videoHeight') {
           videoHeight = Number(part.value);
+        } else if (part.fieldname === 'videoCompressionStrength') {
+          videoCompressionStrength = Number(part.value);
         }
       }
     }
@@ -79,10 +82,11 @@ export class CompressionController {
     if (modality === 'video') {
       const frameBytes = videoWidth * videoHeight * 3 / 2;
       const { size } = await fs.stat(inputPath);
-      if (!Number.isSafeInteger(frameBytes) || frameBytes <= 0 || size === 0 || size % frameBytes !== 0) {
+      if (!Number.isSafeInteger(frameBytes) || frameBytes <= 0 || size === 0 || size % frameBytes !== 0 ||
+          !Number.isInteger(videoCompressionStrength) || videoCompressionStrength < 3 || videoCompressionStrength > 40) {
         await fs.rm(jobDir, { recursive: true, force: true }).catch(() => {});
         return reply.status(400).send({
-          error: 'Video data size does not match the supplied YUV420 dimensions. Upload complete raw YUV420 frames and verify width and height.',
+          error: 'Video settings are invalid. Verify the YUV420 dimensions, upload complete raw frames, and set compression strength from 3 to 40.',
         });
       }
     }
@@ -105,7 +109,7 @@ export class CompressionController {
       const metrics = modality === 'text'
         ? await CompressionEngineService.compress(inputPath, outputPath, algorithm, modality)
         : await ModalityCompressionService.run('compress', modality, inputPath, outputPath, algorithm,
-          modality === 'video' ? { width: videoWidth, height: videoHeight } : undefined);
+          modality === 'video' ? { width: videoWidth, height: videoHeight, compressionStrength: videoCompressionStrength } : undefined);
 
       const jobRecord: JobRecord = {
         jobId,

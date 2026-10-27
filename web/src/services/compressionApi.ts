@@ -15,7 +15,7 @@ export async function compressFile(
   file: File,
   algorithm: AlgorithmType = 'lzw',
   modality = 'text',
-  videoDimensions?: { width: number; height: number }
+  videoDimensions?: { width: number; height: number; compressionStrength: number }
 ): Promise<JobRecord> {
   const formData = new FormData();
   formData.append('file', file);
@@ -24,6 +24,7 @@ export async function compressFile(
   if (videoDimensions) {
     formData.append('videoWidth', String(videoDimensions.width));
     formData.append('videoHeight', String(videoDimensions.height));
+    formData.append('videoCompressionStrength', String(videoDimensions.compressionStrength));
   }
 
   const res = await fetch(`${API_BASE}/api/compress`, {

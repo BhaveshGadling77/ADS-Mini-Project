@@ -80,8 +80,8 @@ private:
     }
 
 public:
-    // Spatial = 3 preserves edges/gradients; Temporal = 1 prevents frame flicker
-    QuadTreeCompressor(int s_thresh = 3, int t_thresh = 1) 
+    // Higher spatial thresholds reduce detail and usually produce smaller archives.
+    QuadTreeCompressor(int s_thresh = 12, int t_thresh = 1) 
         : spatial_threshold(s_thresh), temporal_threshold(t_thresh) {}
 
     void processFrame(const Mat& curr, const Mat& prev, string& bitstream, vector<uint8_t>& colors) {
@@ -94,10 +94,13 @@ public:
 // ==========================================================
 // Compress raw YUV420 video
 // ==========================================================
-void compressYUVWorkflow(const string& input_path, const string& output_cmp, int orig_w, int orig_h) {
+void compressYUVWorkflow(const string& input_path, const string& output_cmp, int orig_w, int orig_h, int compression_strength) {
     cout << "Raw YUV Video Detected." << endl;
     if (orig_w <= 0 || orig_h <= 0 || orig_w % 2 != 0 || orig_h % 2 != 0) {
         throw runtime_error("YUV420 dimensions must be positive even numbers.");
+    }
+    if (compression_strength < 3 || compression_strength > 40) {
+        throw runtime_error("Compression strength must be between 3 and 40.");
     }
 
     ifstream infile(input_path, ios::binary);
@@ -120,7 +123,7 @@ void compressYUVWorkflow(const string& input_path, const string& output_cmp, int
     int frame_size = orig_w * orig_h * 3 / 2;
     vector<uint8_t> yuv_buffer(frame_size);
 
-    QuadTreeCompressor qt;
+    QuadTreeCompressor qt(compression_strength);
     Mat prev_frame;
     int frame_count = 0;
 
@@ -160,13 +163,13 @@ void compressYUVWorkflow(const string& input_path, const string& output_cmp, int
 // 5. Main Execution Router
 // ==========================================================
 int main(int argc, char** argv) {
-    if (argc != 5) {
-        cerr << "Usage: " << argv[0] << " <input.yuv> <output.cmp> <width> <height>" << endl;
+    if (argc != 6) {
+        cerr << "Usage: " << argv[0] << " <input.yuv> <output.cmp> <width> <height> <compression-strength>" << endl;
         return 2;
     }
 
     try {
-        compressYUVWorkflow(argv[1], argv[2], stoi(argv[3]), stoi(argv[4]));
+        compressYUVWorkflow(argv[1], argv[2], stoi(argv[3]), stoi(argv[4]), stoi(argv[5]));
     } catch (const exception& e) {
         cerr << "Video compression failed: " << e.what() << endl;
         return 1;
