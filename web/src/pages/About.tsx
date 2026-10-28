@@ -135,17 +135,17 @@ export const About: React.FC = () => {
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
             <div className="text-xs text-slate-500 uppercase font-mono">Image Compression</div>
             <div className="font-bold text-slate-200 mt-1">Jibran</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Quadtree, KD-Tree</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">Huffman Image Coding</div>
           </div>
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
             <div className="text-xs text-slate-500 uppercase font-mono">Audio Compression</div>
             <div className="font-bold text-slate-200 mt-1">Parth</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Wavelet, Delta-RLE</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">Huffman Audio Coding</div>
           </div>
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
             <div className="text-xs text-slate-500 uppercase font-mono">Video Compression</div>
             <div className="font-bold text-slate-200 mt-1">Sangram</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Interframe, Octree</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">Quadtree</div>
           </div>
         </div>
       </div>
